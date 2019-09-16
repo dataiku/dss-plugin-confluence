@@ -1,0 +1,85 @@
+{
+    "meta": {
+        "label": "Wiki Confluence export",
+        "description": "Export project's wiki to Confluence",
+        // icon: must be one of the FontAwesome 3.2.1 icons, complete list here at https://fontawesome.com/v3.2.1/icons/
+        "icon": "icon-puzzle-piece"
+    },
+    "impersonate": false,
+    "params": [
+        {
+            "name": "username",
+            "label": "Username",
+            "type": "STRING",
+            "description": "Confluence username",
+            "mandatory": true
+        },
+        {
+            "name": "password",
+            "label": "Password",
+            "type": "PASSWORD",
+            "description": "Confluence password",
+            "mandatory": true
+        },
+        {
+            "name": "confluence_space",
+            "label": "Confluence space",
+            "type": "STRING",
+            "description": "Confluence space",
+            "mandatory": true
+        },
+        {
+            "name": "server_type",
+            "label": "Type of Confluence server",
+            "type": "SELECT",
+            "selectChoices": [
+                {
+                    "value": "local",
+                    "label": "Local server"
+                },
+                {
+                    "value": "remote",
+                    "label": "Atlassian instance"
+                }
+            ]
+        },
+        {
+            "name": "orgname",
+            "label": "Organization name",
+            "type": "STRING",
+            "description": "Organization Name",
+            "visibilityCondition" : "model.server_type == 'remote'",
+            "mandatory": false
+        },
+        {
+            "name": "url",
+            "label": "URL",
+            "type": "STRING",
+            "description": "URL of your Confluence server",
+            "visibilityCondition" : "model.server_type == 'local'",
+            "mandatory": false
+        }
+    ],
+
+    /* list of required permissions on the project to see/run the runnable */
+    "permissions": [],
+    "resultType": "URL",
+    "resultLabel": "Target wiki space on Confluence",
+    "extension": "txt",
+    "mimeType": "text/plain",
+
+    /* Macro roles define where this macro will appear in DSS GUI. They are used to pre-fill a macro parameter with context.
+
+       Each role consists of:
+        - type: where the macro will be shown
+            * when selecting DSS object(s): DATASET, DATASETS, API_SERVICE, API_SERVICE_VERSION, BUNDLE, VISUAL_ANALYSIS, SAVED_MODEL, MANAGED_FOLDER
+            * in the global project list: PROJECT_MACROS
+        - targetParamsKey(s): name of the parameter(s) that will be filled with the selected object
+    */
+    "macroRoles": [
+     /* {
+            "type": "DATASET",
+            "targetParamsKey": "input_dataset"
+        } */
+    ]
+}
