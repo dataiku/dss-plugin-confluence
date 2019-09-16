@@ -1,0 +1,13 @@
+{
+    "id": "confluence",
+    "version": "1.0.0",
+    "meta": {
+        "label": "DSS wiki push to Confluence",
+        "description": "",
+        "author": "Dataiku (Alex BOURRET)",
+        "icon": "icon-puzzle",
+        "licenseInfo": "Apache Software License",
+        "url": "https://www.dataiku.com/community/plugins/info/confluence.html",
+        "tags": ["Collaboration"]
+    }
+}
