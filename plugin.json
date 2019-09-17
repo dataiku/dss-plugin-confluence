@@ -3,9 +3,9 @@
     "version": "1.0.0",
     "meta": {
         "label": "DSS wiki push to Confluence",
-        "description": "",
+        "description": "Export your DSS wiki pages to a Confluence space",
         "author": "Dataiku (Alex BOURRET)",
-        "icon": "icon-puzzle",
+        "icon": "icon-cloud-download",
         "licenseInfo": "Apache Software License",
         "url": "https://www.dataiku.com/community/plugins/info/confluence.html",
         "tags": ["Collaboration"]

@@ -14,9 +14,12 @@ import requests
 import re
 from emoji import replace_emoji
 
-#import locale
-#os.environ["PYTHONIOENCODING"] = "utf-8"
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 
+import locale
+os.environ["PYTHONIOENCODING"] = "utf-8"
 
 class DSSWikiConfluenceExporter(Runnable):
     """The base interface for a Python runnable"""
@@ -82,24 +85,21 @@ class DSSWikiConfluenceExporter(Runnable):
                 self.recurse_taxonomy(article['children'], confluence_id)
             else:
                 confluence_id = self.transfer_article(article['id'], ancestor)
-                
+
     def transfer_article(self, article_id, parent_id = None):
         article = self.wiki.get_article(article_id)
         page_name = article.get_data().get_name()
         dss_page_body = article.get_data().get_body()
-        
+
         dss_page_body = self.develop_dss_links(dss_page_body)
         dss_page_body = self.develop_dsswiki_links(dss_page_body)
         confluence_page_body = self.convert(dss_page_body)
-        
-        #myLocale=locale.setlocale(category=locale.LC_ALL, locale="en_GB.UTF-8")
-        #print(confluence_page_body.encode('utf-8', errors='ignore'))
-        
+
         status = self.confluence.get_page_by_title(self.confluence_space, page_name)
         print('ALX:first status={0}'.format(status)) # got None here
         if status != None and "id" in status:
             self.confluence.remove_page(status['id'])
-        
+
         status = self.confluence.create_page(
             space=self.confluence_space,
             title=page_name,
@@ -116,6 +116,7 @@ class DSSWikiConfluenceExporter(Runnable):
             self.username,
             self.password
         )
+        myLocale=locale.setlocale(category=locale.LC_ALL, locale="en_GB.UTF-8")
         status = self.confluence.update_page(
             page_id = new_id,
             title = page_name,
@@ -156,4 +157,3 @@ class DSSWikiConfluenceExporter(Runnable):
         # this [[Title]] notation only works for wiki articles -> straight embeding in <a> tag
         md = re.sub(r'\[\[([a-zA-Z0-9_]+)\]\]', r'<a href="/display/'+ self.confluence_space + r'/\1">\1</a>',md)
         return md
-    
