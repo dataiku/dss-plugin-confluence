@@ -8,14 +8,14 @@
     "impersonate": false,
     "params": [
         {
-            "name": "username",
+            "name": "confluence_username",
             "label": "Username",
             "type": "STRING",
             "description": "Confluence username",
             "mandatory": true
         },
         {
-            "name": "password",
+            "name": "confluence_password",
             "label": "Password",
             "type": "PASSWORD",
             "description": "Confluence password",
