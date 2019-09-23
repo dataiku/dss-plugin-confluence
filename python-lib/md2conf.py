@@ -271,7 +271,7 @@ def get_attachment(page_id, filename, CONFLUENCE_API_URL, USERNAME, PASSWORD):
     return False
 
 
-def upload_attachment(page_id, file, comment, CONFLUENCE_API_URL, USERNAME, PASSWORD):
+def upload_attachment(page_id, file, comment, CONFLUENCE_API_URL, USERNAME, PASSWORD, raw = None):
     """
     Upload an attachement
 
@@ -284,9 +284,12 @@ def upload_attachment(page_id, file, comment, CONFLUENCE_API_URL, USERNAME, PASS
     content_type = mimetypes.guess_type(file)[0]
     filename = os.path.basename(file)
 
-    r = requests.get(file, stream=True)
-    r.raw.decode_content = True
-    
+    if raw is None:
+        r = requests.get(file, stream=True)
+        r.raw.decode_content = True
+    else:
+        r = raw
+
     file_to_upload = {
         'comment': comment,
         'file': (filename, r.raw, content_type, {'Expires': '0'})
