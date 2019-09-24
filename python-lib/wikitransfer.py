@@ -132,6 +132,7 @@ class WikiTransfer(AttachmentTable):
                 upload_attachment(new_id, file_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw = image)
                 md = re.sub(r'!?\[[^\s]+\]\(' + link[1] + r'\.' + link[2] + r'\)', '<ac:image ac:thumbnail="true"><ri:attachment ri:filename="'+ file_name +'" /></ac:image>', md)
             except:
+                md = re.sub(r'!?\[[^\s]+\]\(' + link[1] + r'\.' + link[2] + r'\)', '*Image could not be transfered*', md)
                 pass
         return md
 
