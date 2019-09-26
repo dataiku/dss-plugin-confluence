@@ -200,7 +200,7 @@ def process_refs(html):
 
 # Scan for images and upload as attachments if found
 
-def add_images(page_id, source_server, CONFLUENCE_API_URL, html, USERNAME, PASSWORD):
+def add_images(page_id, source_server, confluence_api_url, html, username, password):
     """
     Scan for images and upload as attachments if found
 
@@ -213,9 +213,9 @@ def add_images(page_id, source_server, CONFLUENCE_API_URL, html, USERNAME, PASSW
         alt_text = ""
         abs_path = source_server + rel_path
         basename = os.path.basename(rel_path)
-        upload_attachment(page_id, abs_path, alt_text, CONFLUENCE_API_URL, USERNAME, PASSWORD)
+        upload_attachment(page_id, abs_path, alt_text, confluence_api_url, username, password)
         if re.search('http.*', rel_path) is None:
-            if CONFLUENCE_API_URL.endswith('/wiki'):
+            if confluence_api_url.endswith('/wiki'):
                 html = html.replace('%s' % (rel_path),
                                     '/wiki/download/attachments/%s/%s' % (page_id, basename))
             else:
@@ -245,7 +245,7 @@ def add_contents(html):
     html = contents_markup + '\n' + html
     return html
 
-def get_attachment(page_id, filename, CONFLUENCE_API_URL, USERNAME, PASSWORD):
+def get_attachment(page_id, filename, confluence_api_url, username, password):
     """
     Get page attachment
 
@@ -253,10 +253,10 @@ def get_attachment(page_id, filename, CONFLUENCE_API_URL, USERNAME, PASSWORD):
     :param filename: attachment filename
     :return: attachment info in case of success, False otherwise
     """
-    url = '%s/rest/api/content/%s/child/attachment?filename=%s' % (CONFLUENCE_API_URL, page_id, filename)
+    url = '%s/rest/api/content/%s/child/attachment?filename=%s' % (confluence_api_url, page_id, filename)
 
     session = requests.Session()
-    session.auth = (USERNAME, PASSWORD)
+    session.auth = (username, password)
 
     response = session.get(url)
     response.raise_for_status()
@@ -271,7 +271,7 @@ def get_attachment(page_id, filename, CONFLUENCE_API_URL, USERNAME, PASSWORD):
     return False
 
 
-def upload_attachment(page_id, file, comment, CONFLUENCE_API_URL, USERNAME, PASSWORD, raw = None):
+def upload_attachment(page_id, file, comment, confluence_api_url, username, password, raw = None):
     """
     Upload an attachement
 
@@ -295,14 +295,14 @@ def upload_attachment(page_id, file, comment, CONFLUENCE_API_URL, USERNAME, PASS
         'file': (filename, r.raw, content_type, {'Expires': '0'})
     }
 
-    attachment = get_attachment(page_id, filename, CONFLUENCE_API_URL, USERNAME, PASSWORD)
+    attachment = get_attachment(page_id, filename, confluence_api_url, username, password)
     if attachment:
-        url = '%s/rest/api/content/%s/child/attachment/%s/data' % (CONFLUENCE_API_URL, page_id, attachment.id)
+        url = '%s/rest/api/content/%s/child/attachment/%s/data' % (confluence_api_url, page_id, attachment.id)
     else:
-        url = '%s/rest/api/content/%s/child/attachment/' % (CONFLUENCE_API_URL, page_id)
+        url = '%s/rest/api/content/%s/child/attachment/' % (confluence_api_url, page_id)
 
     session = requests.Session()
-    session.auth = (USERNAME, PASSWORD)
+    session.auth = (username, password)
     session.headers.update({'X-Atlassian-Token': 'no-check'})
 
     response = session.post(url, files=file_to_upload)

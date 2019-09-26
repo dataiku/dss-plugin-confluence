@@ -35,11 +35,11 @@
             "selectChoices": [
                 {
                     "value": "local",
-                    "label": "Local server"
+                    "label": "On premises Confluence Server"
                 },
                 {
                     "value": "remote",
-                    "label": "Atlassian instance"
+                    "label": "Confluence Cloud"
                 }
             ]
         },

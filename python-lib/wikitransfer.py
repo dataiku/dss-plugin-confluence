@@ -48,8 +48,6 @@ class WikiTransfer(AttachmentTable):
         #{u'message': u'A page with this title already exists: A page already exists with the title Root in the space with key DEMO', u'data': {u'successful': False, u'errors': [], u'valid': True, u'allowedInReadOnlyMode': True, u'authorized': False}, u'reason': u'Bad Request', u'statusCode': 400}
         new_id = status['id'] # todo: confluence can send None, fix it 
 
-        # todo: process folders
-        # article_data.article_data['article']['layout'] == 'FOLDER' #u'WIKI_ARTICLE'
         if len(article_data.article_data['article']['attachments']) > 0:
             self.process_attachments(new_id, article_data)
 
@@ -103,7 +101,6 @@ class WikiTransfer(AttachmentTable):
     
     def find_dss_links(self, md):
         dss_links_regexp = re.compile(r'(\bsaved_model\b|\binsight\b|\bproject\b|\bdataset\b):([a-zA-Z0-9_]+)\.?([a-zA-Z0-9_]+)?',flags=re.I | re.X)
-        # (dss object type, project / id, id)
         return dss_links_regexp.findall(md)
 
     def build_dss_path(self, object_type, project_key, object_id):
