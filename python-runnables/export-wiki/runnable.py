@@ -33,8 +33,12 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         self.plugin_config = plugin_config
         self.confluence_username = self.config.get("confluence_username", None)
         self.confluence_password = self.config.get("confluence_password", None)
-        self.confluence_url = self.format_url(self.config.get("server_type", None), self.config.get("url", None), self.config.get("orgname", None))
-        self.confluence_space = self.config.get("confluence_space", None)
+        self.confluence_url = self.format_confluence_url(self.config.get("server_type", None), self.config.get("url", None), self.config.get("orgname", None))
+        self.confluence_space_key = self.config.get("confluence_space_key", None)#.upper()
+        self.confluence_space_name = self.config.get("confluence_space_name", None)
+        if self.confluence_space_name == "":
+            self.confluence_space_name = self.confluence_space_key
+        self.check_space_key_format()
         self.client = dataiku.api_client()
         self.studio_external_url = self.client.get_general_settings().get_raw()['studioExternalUrl']
         self.wiki = DSSWiki(self.client, self.project_key)
@@ -61,12 +65,12 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         The progress_callback is a function expecting 1 value: current progress
         """
         self.progress_callback = progress_callback
-        space = self.confluence.get_space(self.confluence_space)
+        space = self.confluence.get_space(self.confluence_space_key)
 
         if "id" not in space:
-            space = self.confluence.create_space(self.confluence_space, self.confluence_space)
+            space = self.confluence.create_space(self.confluence_space_key, self.confluence_space_name)
         if space is None:
-            space = self.confluence.get_space(self.confluence_space)
+            space = self.confluence.get_space(self.confluence_space_key)
         if space is not None and "homepage" in space:
             ancestor_id = space['homepage']['id']
         else:
@@ -74,4 +78,4 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
 
         self.recurse_taxonomy(self.taxonomy, ancestor_id)
         
-        return self.confluence_url + "/display/" + self.confluence_space
+        return self.confluence_url + "/display/" + self.confluence_space_key

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+# -*- coding: utf-8 -*-
 """
 # --------------------------------------------------------------------------------------------------
 # Rittman Mead Markdown to Confluence Tool
@@ -24,6 +24,7 @@ import webbrowser
 
 import markdown
 import requests
+from urllib   import quote
 
 
 def convert_comment_block(html):
@@ -211,7 +212,10 @@ def add_images(page_id, source_server, confluence_api_url, html, username, passw
     for tag in re.findall('<img(.*?)\/>', html):
         rel_path = re.search('src="(.*?)"', tag).group(1)
         alt_text = ""
-        abs_path = source_server + rel_path
+        if is_url(rel_path):
+            abs_path =  rel_path
+        else:
+            abs_path = source_server + '/' + rel_path
         basename = os.path.basename(rel_path)
         upload_attachment(page_id, abs_path, alt_text, confluence_api_url, username, password)
         if re.search('http.*', rel_path) is None:
@@ -223,6 +227,15 @@ def add_images(page_id, source_server, confluence_api_url, html, username, passw
                                     '/download/attachments/%s/%s' % (page_id, basename))
     return html
 
+def is_url(to_check):
+    regex = re.compile(
+        r'^(?:http|ftp)s?://' # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
+        r'localhost|' #localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
+        r'(?::\d+)?' # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+    return re.match(regex, to_check) is not None
 
 def add_contents(html):
     """
@@ -253,7 +266,7 @@ def get_attachment(page_id, filename, confluence_api_url, username, password):
     :param filename: attachment filename
     :return: attachment info in case of success, False otherwise
     """
-    url = '%s/rest/api/content/%s/child/attachment?filename=%s' % (confluence_api_url, page_id, filename)
+    url = '%s/rest/api/content/%s/child/attachment?filename=%s' % (confluence_api_url, page_id, urlEncodeNonAscii(filename))
 
     session = requests.Session()
     session.auth = (username, password)
@@ -289,13 +302,13 @@ def upload_attachment(page_id, file, comment, confluence_api_url, username, pass
         r.raw.decode_content = True
     else:
         r = raw
-
     file_to_upload = {
         'comment': comment,
-        'file': (filename, r.raw, content_type, {'Expires': '0'})
+        'file': (urlEncodeNonAscii(filename), r.raw, content_type, {'Expires': '0'})
     }
 
     attachment = get_attachment(page_id, filename, confluence_api_url, username, password)
+
     if attachment:
         url = '%s/rest/api/content/%s/child/attachment/%s/data' % (confluence_api_url, page_id, attachment.id)
     else:
@@ -305,11 +318,12 @@ def upload_attachment(page_id, file, comment, confluence_api_url, username, pass
     session.auth = (username, password)
     session.headers.update({'X-Atlassian-Token': 'no-check'})
 
-    response = session.post(url, files=file_to_upload)
-    response.raise_for_status()
+    session.post(url, files=file_to_upload)
 
     return True
 
+def urlEncodeNonAscii(b):
+    return re.sub('[\x80-\xFF]', lambda c: '%%%02x' % ord(c.group(0)), b)
 
 def md2confluent(html, url):
     raise Exception('Unimplemented')
