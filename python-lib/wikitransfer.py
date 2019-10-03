@@ -72,8 +72,8 @@ class WikiTransfer(AttachmentTable):
             logger.error("Could not upload page \"" + dss_page_name + '"')
             error_message = "Could not upload this page from DSS. "
             if "message" in status:
-                error_message = error_message + 'The error message was: ' + status["message"]
-            self.confluence.update_page(
+                error_message = error_message + 'The error message was: ' + self.html_escape(status["message"]) + ''
+            status = self.confluence.update_page(
                 page_id = new_id,
                 title = dss_page_name,
                 body = error_message
@@ -91,7 +91,6 @@ class WikiTransfer(AttachmentTable):
 
         md = md + u'\n' + self.attachment_table.to_md()
         md = self.develop_dss_links(md)
-
         html = markdown.markdown(md, extensions=['markdown.extensions.tables',
                                                        'markdown.extensions.fenced_code',
                                                        'markdown.extensions.nl2br',
@@ -169,9 +168,8 @@ class WikiTransfer(AttachmentTable):
                 else:
                     file_name = link[0]
                 if file_name not in self.transfered_attachments:
-                    upload_attachment(new_id, file_name, "Uploaded by process_attached_images", self.confluence_url, self.confluence_username, self.confluence_password, raw = image)
+                    upload_attachment(new_id, file_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw = image)
                     self.transfered_attachments.append(file_name)
-                print('ALX:sub with {0}/{1}'.format(link[1], link[2]))
                 md = re.sub(
                     ur'!?\[' + self.LINK_RE + ur'\]\(' + link[1] + ur'\.' + link[2] + ur'\)',
                     '<ac:image ac:thumbnail="true"><ri:attachment ri:filename="'+ urlEncodeNonAscii(file_name) +'" /></ac:image>',
@@ -217,7 +215,7 @@ class WikiTransfer(AttachmentTable):
                 article = self.wiki.get_article(article.article_id)
                 try:
                     file = article.get_uploaded_file(attachment_name, attachment['smartId'])
-                    upload_attachment(article_id, attachment_name, "Uploaded by process_attachments", self.confluence_url, self.confluence_username, self.confluence_password, raw = file)
+                    upload_attachment(article_id, attachment_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw = file)
                     self.transfered_attachments.append(attachment_name)
                 except Exception as err:
                     # get_uploaded_file not implemented yet on backend, older version of DSS
@@ -254,3 +252,13 @@ class WikiTransfer(AttachmentTable):
             if error_code / 100 != 2:
                 return True
         return False
+
+    def html_escape(self, text):
+        html_escape_table = {
+            "&": "&amp;",
+            '"': "&quot;",
+            "'": "&apos;",
+            ">": "&gt;",
+            "<": "&lt;",
+        }
+        return "".join(html_escape_table.get(c,c) for c in text)
