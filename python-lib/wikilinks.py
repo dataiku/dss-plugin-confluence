@@ -1,3 +1,5 @@
+# Based on https://github.com/Python-Markdown/markdown/blob/master/markdown/extensions/wikilinks.py
+
 '''
 WikiLinks Extension for Python-Markdown
 ======================================

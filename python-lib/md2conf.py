@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Based on https://github.com/RittmanMead/md_to_conf
 """
 # --------------------------------------------------------------------------------------------------
 # Rittman Mead Markdown to Confluence Tool

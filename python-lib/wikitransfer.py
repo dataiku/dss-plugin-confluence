@@ -91,6 +91,7 @@ class WikiTransfer(AttachmentTable):
 
         md = md + u'\n' + self.attachment_table.to_md()
         md = self.develop_dss_links(md)
+        print('ALX:md="{0}"'.format(md))
         html = markdown.markdown(md, extensions=['markdown.extensions.tables',
                                                        'markdown.extensions.fenced_code',
                                                        'markdown.extensions.nl2br',
@@ -128,27 +129,46 @@ class WikiTransfer(AttachmentTable):
             project_key = self.project_key if link[2] == '' and link[0].lower() != 'project' else link[1]
             object_id = link[1] if link[2] == '' else link[2]
             initial_id = object_id if link[2] == '' else project_key + '.' + object_id
+            if object_type == 'article':
+                object_id = self.article_title(project_key, object_id)
+                md = re.sub(ur'\[[^\]]*\]\(' + object_type + r':' + initial_id + '\)', '[[' + object_id + ']]', md, flags=re.IGNORECASE)
+                md = re.sub(object_type + r':' + initial_id, '[[' + object_id + ']]', md, flags=re.IGNORECASE)
             object_path = self.build_dss_path(object_type, project_key, object_id)
 
             md = re.sub(r'\(' + object_type + r':' + initial_id + r'\)', '(' + object_path + ')',  md, flags=re.IGNORECASE)
             md = re.sub( object_type + r':' + initial_id, self.build_dss_url(object_type, object_path),  md, flags=re.IGNORECASE)
         return md
 
+    def article_title(self, project_key, article_id):
+        name = ""
+        try :
+            name = DSSWiki(self.client, project_key).get_article(article_id).get_data().get_name()
+        except:
+            logger.error('Could not get article name from DSS')
+        return name
+
     def find_dss_links(self, md):
-        dss_links_regexp = re.compile(r'(\bsaved_model\b|\binsight\b|\bproject\b|\bdataset\b):([a-zA-Z0-9_]+)\.?([a-zA-Z0-9_]+)?',flags=re.I | re.X)
+        dss_links_regexp = re.compile(r'(\barticle\b|\bsaved_model\b|\binsight\b|\bproject\b|\bdataset\b):([a-zA-Z0-9_]+)\.?([a-zA-Z0-9_]+)?',flags=re.I | re.X)
         return dss_links_regexp.findall(md)
 
     def build_dss_path(self, object_type, project_key, object_id):
         path_type = {
+            'article': object_id,
             'saved_model': '/savedmodels/' + object_id + '/versions/',
             'insight': '/dashboards/insights/' + object_id + '_/view',
             'project': '/',
-            'dataset': '/datasets/'+ object_id + '/explore/'
+            'dataset': '/datasets/' + object_id + '/explore/'
         }
-        return self.studio_external_url + '/projects/' + project_key + path_type[object_type.lower()]
+        if object_type == 'article':
+            return project_key + '.' + object_id
+        else:
+            return self.studio_external_url + '/projects/' + project_key + path_type[object_type.lower()]
 
     def build_dss_url(self, object_type, object_path):
-        return '<a href="' + object_path + '">' + object_type + '</a>'
+        if object_type == 'article':
+            return '<ac:link><ri:page ri:content-title="' + object_path + '" /></ac:link>'
+        else:
+            return '<a href="' + object_path + '">' + object_type + '</a>'
 
     def process_attached_images(self, md, article_id, new_id):
         links = re.findall(
