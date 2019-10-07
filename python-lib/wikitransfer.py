@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from md2conf import convert_info_macros, convert_comment_block, convert_code_block, add_images, process_refs, upload_attachment, urlEncodeNonAscii
+from md2conf import convert_info_macros, convert_comment_block, convert_code_block, add_images, process_refs, upload_attachment, urlEncodeNonAscii, urlEncodeAmpAndNonAscii
 import markdown, re, urllib, logging
 from emoji import replace_emoji
 from dataikuapi.dss.wiki import DSSWiki
@@ -24,8 +24,8 @@ logging.basicConfig(level=logging.INFO,
 class WikiTransfer(AttachmentTable):
     attachment_table = AttachmentTable()
     transfered_attachments = []
-    LINK_RE = ur'[\u0080\u0081\u0099\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\udfff\ud83d\ud000-\udfff\ud83e\ud000-\udfff\w\X0-9_ \-\.&\(\)]+'
-    LINK_URL_RE = ur'[\u0080\u0081\u0099\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\udfff\ud83d\ud000-\udfff\ud83e\ud000-\udfff\w\X0-9_&;:\|\' \-\.\(\)]+'
+    LINK_RE = ur'[^\]]+'
+    LINK_URL_RE = ur'[\u0080\u0081\u0099\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\udfff\ud83d\ud000-\udfff\ud83e\ud000-\udfff\w\X0-9_&;%:\|\' \-\.\(\)]+'
 
     def recurse_taxonomy(self, taxonomy, ancestor = None):
         for article in taxonomy:
@@ -84,14 +84,13 @@ class WikiTransfer(AttachmentTable):
 
     def convert(self, md_input, article_id, new_id, article_data):
         md = replace_emoji(md_input)
-        md = self.process_attached_images(md, article_id, new_id)
+        md = self.process_linked_items(md, article_id, new_id)
 
         if len(article_data.article_data['article']['attachments']) > 0:
             self.process_attachments(new_id, article_data)
 
         md = md + u'\n' + self.attachment_table.to_md()
         md = self.develop_dss_links(md)
-        print('ALX:md="{0}"'.format(md))
         html = markdown.markdown(md, extensions=['markdown.extensions.tables',
                                                        'markdown.extensions.fenced_code',
                                                        'markdown.extensions.nl2br',
@@ -104,6 +103,9 @@ class WikiTransfer(AttachmentTable):
         html = convert_code_block(html)
         html = process_refs(html)
 
+        # converting img tags present in the initial DSS pages
+        # todo: instead of uploading the image, can be tagged instead with :
+        # <ac:image ac:height="250"><ri:url ri:value="http://localhost:8082/static/dataiku/images/dss-logo-about.png" /></ac:image>
         html = add_images(
             new_id,
             self.studio_external_url,
@@ -170,40 +172,67 @@ class WikiTransfer(AttachmentTable):
         else:
             return '<a href="' + object_path + '">' + object_type + '</a>'
 
-    def process_attached_images(self, md, article_id, new_id):
-        links = re.findall(
+    def process_linked_items(self, md, article_id, new_id):
+
+        md_links = self.find_all_md_links(md)
+        md_links = self.remove_duplicate_links(md_links)
+
+        for target_name, project_id, upload_id in md_links:
+            if target_name in self.transfered_attachments:
+                continue
+            article = self.wiki.get_article(article_id)
+            try:
+                attachment = self.get_uploaded_file(article, project_id, upload_id)
+                if target_name == "":
+                    file_name = project_id + '.' + upload_id
+                else:
+                    file_name = target_name
+                if file_name not in self.transfered_attachments:
+                    upload_attachment(new_id, file_name, "process_linked_items", self.confluence_url, self.confluence_username, self.confluence_password, raw = attachment)
+                    self.transfered_attachments.append(file_name)
+                md = self.replace_md_links_with_confluence_links(md, project_id, upload_id, file_name)
+            except:
+                md = self.replace_md_links_with_confluence_links(md, project_id, upload_id, file_name, error_message='*Item could not be transfered*')
+                logger.error("Could not upload item \"" + project_id + '.' + upload_id + '"')
+        return md
+
+    def find_all_md_links(self, md):
+        return re.findall(
             ur'\[(' + self.LINK_RE + ur')\]\(([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\)',
             md.decode('utf-8'),
             flags=re.UNICODE
         )
-        links = self.remove_duplicate_links(links)
-        for link in links:
-            if link[0] in self.transfered_attachments:
-                continue
-            article = self.wiki.get_article(article_id)
-            try:
-                image = self.get_uploaded_file(article, link[1], link[2])
-                if link[0] == "":
-                    file_name = link[1] + '.' + link[2]
-                else:
-                    file_name = link[0]
-                if file_name not in self.transfered_attachments:
-                    upload_attachment(new_id, file_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw = image)
-                    self.transfered_attachments.append(file_name)
-                md = re.sub(
-                    ur'!?\[' + self.LINK_RE + ur'\]\(' + link[1] + ur'\.' + link[2] + ur'\)',
-                    '<ac:image ac:thumbnail="true"><ri:attachment ri:filename="'+ urlEncodeNonAscii(file_name) +'" /></ac:image>',
-                    md.decode('utf-8'),
-                    flags=re.UNICODE
-                )
-            except:
-                md = re.sub(
-                    ur'!?\[' + self.LINK_RE + ur'\]\(' + link[1] + ur'\.' + link[2] + ur'\)',
-                    '*Image could not be transfered*',
-                    md.decode('utf-8'),
-                    flags=re.UNICODE
-                )
-        return md
+
+    def replace_md_links_with_confluence_links(self, md, project_key, upload_id, file_name, error_message = None):
+        ret_md = self.replace_img_links_with_confluence_links(md, project_key, upload_id, file_name, error_message)
+        ret_md = self.replace_objects_links_with_confluence_links(ret_md, project_key, upload_id, file_name, error_message)
+        return ret_md
+
+    def replace_img_links_with_confluence_links(self, md, project_key, upload_id, file_name, error_message = None):
+        if error_message is not None:
+            ret_link = error_message
+        else:
+            ret_link = '<ac:image><ri:attachment ri:filename="'+ self.html_escape(urlEncodeNonAscii(file_name)) +'" /></ac:image>'
+        ret_md = re.sub(
+            ur'!\[' + self.LINK_RE + ur'\]\(' + project_key + ur'\.' + upload_id + ur'\)',
+            ret_link,
+            md.decode('utf-8'),
+            flags=re.UNICODE
+        )
+        return ret_md
+
+    def replace_objects_links_with_confluence_links(self, md, project_key, upload_id, file_name, error_message = None):
+        if error_message is not None:
+            ret_link = error_message
+        else:
+            ret_link = '<ac:link><ri:attachment ri:filename="'+ self.html_escape(urlEncodeNonAscii(file_name)) +'" /></ac:link>'
+        ret_md = re.sub(
+            ur'\[' + self.LINK_RE + ur'\]\(' + project_key + ur'\.' + upload_id + ur'\)',
+            ret_link,
+            md.decode('utf-8'),
+            flags=re.UNICODE
+        )
+        return ret_md
 
     def get_uploaded_file(self, article, project_key, upload_id):
         if project_key == self.project_key:
@@ -235,7 +264,7 @@ class WikiTransfer(AttachmentTable):
                 article = self.wiki.get_article(article.article_id)
                 try:
                     file = article.get_uploaded_file(attachment_name, attachment['smartId'])
-                    upload_attachment(article_id, attachment_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw = file)
+                    upload_attachment(article_id, attachment_name, "process_attachments", self.confluence_url, self.confluence_username, self.confluence_password, raw = file)
                     self.transfered_attachments.append(attachment_name)
                 except Exception as err:
                     # get_uploaded_file not implemented yet on backend, older version of DSS

@@ -20,7 +20,6 @@ import locale
 os.environ["PYTHONIOENCODING"] = "utf-8"
 
 class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
-    """The base interface for a Python runnable"""
 
     def __init__(self, project_key, config, plugin_config):
         """
@@ -34,7 +33,7 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         self.confluence_username = self.config.get("confluence_username", None)
         self.confluence_password = self.config.get("confluence_password", None)
         self.confluence_url = self.format_confluence_url(self.config.get("server_type", None), self.config.get("url", None), self.config.get("orgname", None))
-        self.confluence_space_key = self.config.get("confluence_space_key", None)#.upper()
+        self.confluence_space_key = self.config.get("confluence_space_key", None)
         self.confluence_space_name = self.config.get("confluence_space_name", None)
         if self.confluence_space_name == "":
             self.confluence_space_name = self.confluence_space_key
@@ -53,17 +52,9 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         self.progress = 0
 
     def get_progress_target(self):
-        """
-        If the runnable will return some progress info, have this function return a tuple of 
-        (target, unit) where unit is one of: SIZE, FILES, RECORDS, NONE
-        """
         return (len(self.articles), 'FILES')
 
     def run(self, progress_callback):
-        """
-        Do stuff here. Can return a string or raise an exception.
-        The progress_callback is a function expecting 1 value: current progress
-        """
         self.progress_callback = progress_callback
         space = self.confluence.get_space(self.confluence_space_key)
 

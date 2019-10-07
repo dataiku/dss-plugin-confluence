@@ -267,7 +267,7 @@ def get_attachment(page_id, filename, confluence_api_url, username, password):
     :param filename: attachment filename
     :return: attachment info in case of success, False otherwise
     """
-    url = '%s/rest/api/content/%s/child/attachment?filename=%s' % (confluence_api_url, page_id, urlEncodeNonAscii(filename))
+    url = '%s/rest/api/content/%s/child/attachment?filename=%s' % (confluence_api_url, page_id, urlEncodeAmpAndNonAscii(filename))
 
     session = requests.Session()
     session.auth = (username, password)
@@ -319,12 +319,15 @@ def upload_attachment(page_id, file, comment, confluence_api_url, username, pass
     session.auth = (username, password)
     session.headers.update({'X-Atlassian-Token': 'no-check'})
 
-    session.post(url, files=file_to_upload)
+    res = session.post(url, files=file_to_upload)
 
     return True
 
 def urlEncodeNonAscii(b):
     return re.sub('[\x80-\xFF]', lambda c: '%%%02x' % ord(c.group(0)), b)
+
+def urlEncodeAmpAndNonAscii(b):
+    return re.sub('[\x80-\xFF&]', lambda c: '%%%02x' % ord(c.group(0)), b)
 
 def md2confluent(html, url):
     raise Exception('Unimplemented')

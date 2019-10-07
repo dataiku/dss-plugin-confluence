@@ -24,7 +24,7 @@
             "name": "confluence_space_name",
             "label": "Confluence Space name",
             "type": "STRING",
-            "description": "",
+            "description": "Only if space does not exist yet",
             "default": "",
             "mandatory": false
         },
@@ -32,7 +32,7 @@
             "name": "confluence_space_key",
             "label": "Confluence Space key",
             "type": "STRING",
-            "description": "[A-Z0-9]",
+            "description": "[a-zA-Z0-9]",
             "mandatory": true
         },
         {
@@ -55,7 +55,7 @@
             "label": "Organization name",
             "type": "STRING",
             "description": "Organization Name",
-            "visibilityCondition" : "model.server_type == 'remote'",
+            "visibilityCondition": "model.server_type == 'remote'",
             "mandatory": false
         },
         {
@@ -63,7 +63,7 @@
             "label": "URL",
             "type": "STRING",
             "description": "URL of your Confluence server",
-            "visibilityCondition" : "model.server_type == 'local'",
+            "visibilityCondition": "model.server_type == 'local'",
             "mandatory": false
         }
     ],
@@ -72,6 +72,5 @@
     "resultLabel": "Target wiki space on Confluence",
     "extension": "txt",
     "mimeType": "text/plain",
-    "macroRoles": [
-    ]
+    "macroRoles": []
 }
