@@ -5,10 +5,10 @@ from dataikuapi import DSSClient
 from dataikuapi.dss.wiki import DSSWiki, DSSWikiSettings
 from dataikuapi.utils import DataikuException
 import dataiku
-import os
+import os, re
 from atlassian import Confluence
 
-import requests
+from requests import HTTPError
 
 from wikitransfer import WikiTransfer
 
@@ -31,9 +31,11 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         self.config = config
         self.plugin_config = plugin_config
         self.confluence_username = self.config.get("confluence_username", None)
+        self.assert_confluence_username()
         self.confluence_password = self.config.get("confluence_password", None)
         self.confluence_url = self.format_confluence_url(self.config.get("server_type", None), self.config.get("url", None), self.config.get("orgname", None))
         self.confluence_space_key = self.config.get("confluence_space_key", None)
+        self.assert_space_key()
         self.confluence_space_name = self.config.get("confluence_space_name", None)
         if self.confluence_space_name == "":
             self.confluence_space_name = self.confluence_space_key
@@ -49,6 +51,7 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
             username=self.confluence_username,
             password=self.confluence_password
         )
+        self.assert_logged_in()
         self.progress = 0
 
     def get_progress_target(self):
@@ -56,12 +59,19 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
 
     def run(self, progress_callback):
         self.progress_callback = progress_callback
+
         space = self.confluence.get_space(self.confluence_space_key)
+        if space is None:
+            raise Exception('Empty answer from server. Please check the Confluence server address.')
 
         if "id" not in space:
             space = self.confluence.create_space(self.confluence_space_key, self.confluence_space_name)
+
         if space is None:
             space = self.confluence.get_space(self.confluence_space_key)
+            if u'statusCode' in space and space[u'statusCode'] == 404:
+                raise Exception('Could not create the "' + self.confluence_space_key + '" space. It probably exists but you don\'t have permission to view it, or the casing is wrong.')
+
         if space is not None and "homepage" in space:
             ancestor_id = space['homepage']['id']
         else:
@@ -70,3 +80,24 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         self.recurse_taxonomy(self.taxonomy, ancestor_id)
         
         return self.confluence_url + "/display/" + self.confluence_space_key
+
+    def assert_logged_in(self):
+        try:
+            user_details = self.confluence.get_user_details_by_userkey(self.confluence_username)
+            print('ALX:user_details={0}'.format(user_details))
+        except:
+            raise Exception('Could not connect to Confluence server. Please check the connection details')
+        if user_details is None:
+            raise Exception('No answer from the server. Please check the connection details to the Confluence server.')
+        if "HTTP Status 401 – Unauthorized" in user_details:
+            raise Exception('No valid Confluence credentials, please check login and password')
+
+    def assert_space_key(self):
+        space_name_format = re.compile(r'^[a-zA-Z0-9]+$')
+        if self.confluence_space_key is None or space_name_format.match(self.confluence_space_key) is None:
+            raise Exception('The space key does not match Confluence requirements ([a-z], [A-Z], [0-9], not space)')
+
+    def assert_confluence_username(self):
+        username_format = re.compile(r'^[a-z0-9]+$')
+        if self.confluence_username is None or username_format.match(self.confluence_username) is None:
+            raise Exception('The Confluence user name is not valid')

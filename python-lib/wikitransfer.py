@@ -7,6 +7,7 @@ from dataikuapi.dss.wiki import DSSWiki
 
 from wikilinks import WikiLinkExtension
 from attachmenttable import AttachmentTable
+import requests
 
 import os
 import sys
@@ -44,9 +45,7 @@ class WikiTransfer(AttachmentTable):
 
         try:
             status = self.confluence.get_page_by_title(self.confluence_space_key, dss_page_name)
-        except:
-            # Unhandled exception in get_page_by_title when space key is not found. 
-            # If we reached this stage, it means the space key exists, so the casing is probably off.
+        except :
             raise Exception("The Confluence space key \"" + self.confluence_space_key + "\" overlaps with an existing one. Please check its casing.")
 
         if status is None or "id" not in status:
@@ -188,7 +187,7 @@ class WikiTransfer(AttachmentTable):
                 else:
                     file_name = target_name
                 if file_name not in self.transfered_attachments:
-                    upload_attachment(new_id, file_name, "process_linked_items", self.confluence_url, self.confluence_username, self.confluence_password, raw = attachment)
+                    upload_attachment(new_id, file_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw = attachment)
                     self.transfered_attachments.append(file_name)
                 md = self.replace_md_links_with_confluence_links(md, project_id, upload_id, file_name)
             except:
@@ -264,7 +263,7 @@ class WikiTransfer(AttachmentTable):
                 article = self.wiki.get_article(article.article_id)
                 try:
                     file = article.get_uploaded_file(attachment_name, attachment['smartId'])
-                    upload_attachment(article_id, attachment_name, "process_attachments", self.confluence_url, self.confluence_username, self.confluence_password, raw = file)
+                    upload_attachment(article_id, attachment_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw = file)
                     self.transfered_attachments.append(attachment_name)
                 except Exception as err:
                     # get_uploaded_file not implemented yet on backend, older version of DSS

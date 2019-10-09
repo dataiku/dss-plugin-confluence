@@ -32,7 +32,7 @@
             "name": "confluence_space_key",
             "label": "Confluence Space key",
             "type": "STRING",
-            "description": "[a-zA-Z0-9]",
+            "description": "(A-Z, a-z, 0-9)",
             "mandatory": true
         },
         {
