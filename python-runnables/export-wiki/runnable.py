@@ -33,6 +33,7 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         self.confluence_username = self.config.get("confluence_username", None)
         self.assert_confluence_username()
         self.confluence_password = self.config.get("confluence_password", None)
+        self.assert_confluence_password()
         self.confluence_url = self.format_confluence_url(self.config.get("server_type", None), self.config.get("url", None), self.config.get("orgname", None))
         self.confluence_space_key = self.config.get("confluence_space_key", None)
         self.assert_space_key()
@@ -101,3 +102,7 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         username_format = re.compile(r'^[a-z0-9]+$')
         if self.confluence_username is None or username_format.match(self.confluence_username) is None:
             raise Exception('The Confluence user name is not valid')
+
+    def assert_confluence_password(self):
+        if self.confluence_password is None or self.confluence_password == "":
+            raise Exception('Please set your Confluence login password')
