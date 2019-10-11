@@ -47,6 +47,7 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         self.wiki_settings = self.wiki.get_settings()
         self.taxonomy = self.wiki_settings.get_taxonomy()
         self.articles = self.wiki.list_articles()
+        self.space_homepage_id = None
         self.confluence = Confluence(
             url=self.confluence_url,
             username=self.confluence_username,
@@ -74,18 +75,19 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
                 raise Exception('Could not create the "' + self.confluence_space_key + '" space. It probably exists but you don\'t have permission to view it, or the casing is wrong.')
 
         if space is not None and "homepage" in space:
-            ancestor_id = space['homepage']['id']
+            self.space_homepage_id = space['homepage']['id']
         else:
-            ancestor_id = None
+            self.space_homepage_id = None
 
-        self.recurse_taxonomy(self.taxonomy, ancestor_id)
+        self.recurse_taxonomy(self.taxonomy, self.space_homepage_id)
+
+        self.update_landing_page(self.space_homepage_id)
         
         return self.confluence_url + "/display/" + self.confluence_space_key
 
     def assert_logged_in(self):
         try:
             user_details = self.confluence.get_user_details_by_userkey(self.confluence_username)
-            print('ALX:user_details={0}'.format(user_details))
         except:
             raise Exception('Could not connect to Confluence server. Please check the connection details')
         if user_details is None:

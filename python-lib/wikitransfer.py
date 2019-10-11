@@ -179,13 +179,13 @@ class WikiTransfer(AttachmentTable):
         for target_name, project_id, upload_id in md_links:
             if target_name in self.transfered_attachments:
                 continue
+            if target_name == "":
+                file_name = project_id + '.' + upload_id
+            else:
+                file_name = target_name
             article = self.wiki.get_article(article_id)
             try:
                 attachment = self.get_uploaded_file(article, project_id, upload_id)
-                if target_name == "":
-                    file_name = project_id + '.' + upload_id
-                else:
-                    file_name = target_name
                 if file_name not in self.transfered_attachments:
                     upload_attachment(new_id, file_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw = attachment)
                     self.transfered_attachments.append(file_name)
@@ -235,11 +235,11 @@ class WikiTransfer(AttachmentTable):
 
     def get_uploaded_file(self, article, project_key, upload_id):
         if project_key == self.project_key:
-            return article.get_uploaded_file(project_key, upload_id)
+            return article.get_uploaded_file(upload_id)
         else:
             wiki = DSSWiki(self.client, project_key)
             list_articles = wiki.list_articles()
-            return list_articles[0].get_uploaded_file(project_key, upload_id)
+            return list_articles[0].get_uploaded_file(upload_id)
 
     def remove_duplicate_links(self, links):
         # todo
@@ -262,7 +262,7 @@ class WikiTransfer(AttachmentTable):
                 attachment_name = attachment['details']['objectDisplayName']
                 article = self.wiki.get_article(article.article_id)
                 try:
-                    file = article.get_uploaded_file(attachment_name, attachment['smartId'])
+                    file = article.get_uploaded_file(attachment['smartId'])
                     upload_attachment(article_id, attachment_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw = file)
                     self.transfered_attachments.append(attachment_name)
                 except Exception as err:
@@ -310,3 +310,27 @@ class WikiTransfer(AttachmentTable):
             "<": "&lt;",
         }
         return "".join(html_escape_table.get(c,c) for c in text)
+
+    def update_landing_page(self, page_id):
+        self.confluence.update_page(
+            page_id = page_id,
+            title = self.confluence_space_name + ' Home',
+            body = self.create_landing_page()
+        )
+
+    def create_landing_page(self):
+        landing_page_template = """
+            <p class="auto-cursor-target"><br /></p>
+            <ac:structured-macro ac:name="info" ac:schema-version="1"><ac:rich-text-body>
+            <p>This space has been generated from Dataiku DSS <a href="{0}">{1}</a> project.</p></ac:rich-text-body></ac:structured-macro>
+            <p class="auto-cursor-target"><br /></p>
+            <ac:structured-macro ac:name="panel" ac:schema-version="1">
+            <ac:parameter ac:name="title">Table of content</ac:parameter><ac:rich-text-body>
+            <p><ac:structured-macro ac:name="pagetree" ac:schema-version="1">
+            <ac:parameter ac:name="searchBox">true</ac:parameter></ac:structured-macro></p></ac:rich-text-body></ac:structured-macro>
+            <p class="auto-cursor-target"><br /></p>
+        """
+        return landing_page_template.format(self.get_source_wiki_url(), self.project_key)
+
+    def get_source_wiki_url(self):
+        return self.studio_external_url + '/projects/' + self.project_key + '/wiki'
