@@ -96,6 +96,7 @@ class WikiTransfer(AttachmentTable):
                                                        'markdown.extensions.extra',
                                                        WikiLinkExtension()])
 
+        html = self.convert_alert_div_blocks(html)
         html = self.convert_dss_refs_in_wikilinks(html)
         html = convert_info_macros(html)
         html = convert_comment_block(html)
@@ -121,6 +122,16 @@ class WikiTransfer(AttachmentTable):
             ur'content-title="('+ self.project_key +ur')\.(' + self.LINK_URL_RE + ur')">',ur'content-title="\2">',
             html,
             flags=re.IGNORECASE
+        )
+
+    def convert_alert_div_blocks(self, html):
+        confluence_alert_opening_tag = '<ac:structured-macro ac:name="note" ac:schema-version="1" ><ac:parameter ac:name="icon">false</ac:parameter><ac:rich-text-body><p>'
+        confluence_alert_closing_tag = '</p></ac:rich-text-body></ac:structured-macro>'
+        return re.sub(
+            ur'<div.*?class=".*?alert.*?".*?>(.*?)</div>',
+            confluence_alert_opening_tag + ur'\1' + confluence_alert_closing_tag,
+            html,
+            flags = re.DOTALL
         )
 
     def develop_dss_links(self, md):
