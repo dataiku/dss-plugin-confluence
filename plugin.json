@@ -4,10 +4,11 @@
     "meta": {
         "label": "Confluence wiki",
         "description": "Export a DSS wiki to a Confluence space",
-        "author": "Dataiku (Alex BOURRET)",
+        "author": "Dataiku (Alex Bourret)",
         "icon": "icon-cloud-download",
         "licenseInfo": "Apache Software License",
         "url": "https://www.dataiku.com/community/plugins/info/confluence.html",
-        "tags": ["Connector", "Governance"]
+        "tags": ["Connector", "Governance"],
+        "supportLevel": "NOT_SUPPORTED"
     }
 }
