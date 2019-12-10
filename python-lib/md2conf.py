@@ -25,8 +25,6 @@ import webbrowser
 
 import markdown
 import requests
-from urllib   import quote
-
 
 def convert_comment_block(html):
     """

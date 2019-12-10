@@ -12,10 +12,6 @@ from requests import HTTPError
 
 from wikitransfer import WikiTransfer
 
-import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
-
 import locale
 os.environ["PYTHONIOENCODING"] = "utf-8"
 

@@ -11,12 +11,10 @@ import requests
 
 import os
 import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
+
 import locale
 os.environ["PYTHONIOENCODING"] = "utf-8"
 
-from urllib   import quote
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
@@ -25,8 +23,8 @@ logging.basicConfig(level=logging.INFO,
 class WikiTransfer(AttachmentTable):
     attachment_table = AttachmentTable()
     transfered_attachments = []
-    LINK_RE = ur'[^\]]+'
-    LINK_URL_RE = ur'[\u0080\u0081\u0099\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\udfff\ud83d\ud000-\udfff\ud83e\ud000-\udfff\w\X0-9_&;%:\|\' \-\.\(\)]+'
+    LINK_RE = r'[^\]]+'
+    LINK_URL_RE = r'[\u263a-\U0001f645\w0-9_&;%:\|\' \-\.\(\)]+'
 
     def recurse_taxonomy(self, taxonomy, ancestor = None):
         for article in taxonomy:
@@ -60,7 +58,6 @@ class WikiTransfer(AttachmentTable):
         new_id = status['id']
 
         confluence_page_body = self.convert(dss_page_body, article_id, new_id, article_data)
-
         status = self.confluence.update_page(
             page_id = new_id,
             title = dss_page_name,
@@ -119,17 +116,18 @@ class WikiTransfer(AttachmentTable):
 
     def convert_dss_refs_in_wikilinks(self, html):
         return re.sub(
-            ur'content-title="('+ self.project_key +ur')\.(' + self.LINK_URL_RE + ur')">',ur'content-title="\2">',
+            r'content-title="('+ self.project_key +r')\.(' + self.LINK_URL_RE + r')">',r'content-title="\2">',
             html,
             flags=re.IGNORECASE
         )
 
     def convert_alert_div_blocks(self, html):
-        confluence_alert_opening_tag = '<ac:structured-macro ac:name="note" ac:schema-version="1" ><ac:parameter ac:name="icon">false</ac:parameter><ac:rich-text-body><p>'
+        confluence_alert_opening_tag = '<ac:structured-macro ac:name="info" ac:schema-version="1" ><ac:rich-text-body><p>'
         confluence_alert_closing_tag = '</p></ac:rich-text-body></ac:structured-macro>'
+
         return re.sub(
-            ur'<div.*?class=".*?alert.*?".*?>(.*?)</div>',
-            confluence_alert_opening_tag + ur'\1' + confluence_alert_closing_tag,
+            r'<div class="alert".*?>\n?(.*?)\n?</div>',
+            confluence_alert_opening_tag + r'\1' + confluence_alert_closing_tag,
             html,
             flags = re.DOTALL
         )
@@ -143,7 +141,7 @@ class WikiTransfer(AttachmentTable):
             initial_id = object_id if link[2] == '' else project_key + '.' + object_id
             if object_type == 'article':
                 object_id = self.article_title(project_key, object_id)
-                md = re.sub(ur'\[[^\]]*\]\(' + object_type + r':' + initial_id + '\)', '[[' + object_id + ']]', md, flags=re.IGNORECASE)
+                md = re.sub(r'\[[^\]]*\]\(' + object_type + r':' + initial_id + '\)', '[[' + object_id + ']]', md, flags=re.IGNORECASE)
                 md = re.sub(object_type + r':' + initial_id, '[[' + object_id + ']]', md, flags=re.IGNORECASE)
             object_path = self.build_dss_path(object_type, project_key, object_id)
 
@@ -208,8 +206,8 @@ class WikiTransfer(AttachmentTable):
 
     def find_all_md_links(self, md):
         return re.findall(
-            ur'\[(' + self.LINK_RE + ur')\]\(([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\)',
-            md.decode('utf-8'),
+            r'\[(' + self.LINK_RE + r')\]\(([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\)',
+            md,
             flags=re.UNICODE
         )
 
@@ -224,9 +222,9 @@ class WikiTransfer(AttachmentTable):
         else:
             ret_link = '<ac:image><ri:attachment ri:filename="'+ self.html_escape(urlEncodeNonAscii(file_name)) +'" /></ac:image>'
         ret_md = re.sub(
-            ur'!\[' + self.LINK_RE + ur'\]\(' + project_key + ur'\.' + upload_id + ur'\)',
+            r'!\[' + self.LINK_RE + r'\]\(' + project_key + r'\.' + upload_id + r'\)',
             ret_link,
-            md.decode('utf-8'),
+            md,
             flags=re.UNICODE
         )
         return ret_md
@@ -237,9 +235,9 @@ class WikiTransfer(AttachmentTable):
         else:
             ret_link = '<ac:link><ri:attachment ri:filename="'+ self.html_escape(urlEncodeNonAscii(file_name)) +'" /></ac:link>'
         ret_md = re.sub(
-            ur'\[' + self.LINK_RE + ur'\]\(' + project_key + ur'\.' + upload_id + ur'\)',
+            r'\[' + self.LINK_RE + r'\]\(' + project_key + r'\.' + upload_id + r'\)',
             ret_link,
-            md.decode('utf-8'),
+            md,
             flags=re.UNICODE
         )
         return ret_md
