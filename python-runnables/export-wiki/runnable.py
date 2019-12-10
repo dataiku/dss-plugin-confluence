@@ -38,7 +38,11 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
             self.confluence_space_name = self.confluence_space_key
         self.check_space_key_format()
         self.client = dataiku.api_client()
-        self.studio_external_url = self.client.get_general_settings().get_raw()['studioExternalUrl']
+        try:
+            self.studio_external_url = self.client.get_general_settings().get_raw()['studioExternalUrl']
+            assert(self.studio_external_url not in (None, ''))
+        except:
+            raise Exception("Please set the DSS location URL in Administration > Settings > Notifications & Integrations > DSS Location > DSS URL")
         self.wiki = DSSWiki(self.client, self.project_key)
         self.wiki_settings = self.wiki.get_settings()
         self.taxonomy = self.wiki_settings.get_taxonomy()
