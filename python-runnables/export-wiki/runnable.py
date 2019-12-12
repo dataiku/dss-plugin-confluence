@@ -81,7 +81,8 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
 
         self.recurse_taxonomy(self.taxonomy, self.space_homepage_id)
 
-        self.update_landing_page(self.space_homepage_id)
+        if self.space_homepage_id is not None:
+            self.update_landing_page(self.space_homepage_id)
         
         return self.confluence_url + "/display/" + self.confluence_space_key
 
