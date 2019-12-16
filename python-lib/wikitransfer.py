@@ -86,6 +86,7 @@ class WikiTransfer(AttachmentTable):
             self.process_attachments(new_id, article_data)
 
         md = md + u'\n' + self.attachment_table.to_md()
+        md = self.convert_math_blocks(md)
         md = self.develop_dss_links(md)
         html = markdown.markdown(md, extensions=['markdown.extensions.tables',
                                                        'markdown.extensions.fenced_code',
@@ -120,6 +121,21 @@ class WikiTransfer(AttachmentTable):
             html,
             flags=re.IGNORECASE
         )
+
+    def convert_math_blocks(self, md):
+        ret = re.sub(
+            r'\$`([\u263a-\U0001f645\w0-9_ \-&;:\'\(\)\|\.]+)`\$',
+            r'`\1`',
+            md,
+            flags = re.DOTALL
+        )
+        ret = re.sub(
+            r'```math\n',
+            r'```\n',
+            ret,
+            flags = re.DOTALL
+        )
+        return ret
 
     def convert_alert_div_blocks(self, html):
         confluence_alert_opening_tag = '<ac:structured-macro ac:name="info" ac:schema-version="1" ><ac:rich-text-body><p>'
