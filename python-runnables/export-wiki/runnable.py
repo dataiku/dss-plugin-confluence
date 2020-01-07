@@ -101,6 +101,13 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
             raise Exception('No answer from the server. Please check the connection details to the Confluence server.')
         if "HTTP Status 401 – Unauthorized" in user_details:
             raise Exception('No valid Confluence credentials, please check login and password')
+        if "errorMessage" in user_details:
+            raise Exception('Error while accessing Confluence site : {}'.format(user_details["errorMessage"]))
+        if "status-code" in user_details and user_details["status-code"] > 400:
+            if "message" in user_details:
+                raise Exception('Error while accessing Confluence site : {}'.format(user_details["message"]))
+            else:
+                raise Exception('Error {} while accessing Confluence site'.format(user_details["status-code"]))
 
     def assert_space_key(self):
         space_name_format = re.compile(r'^[a-zA-Z0-9]+$')
