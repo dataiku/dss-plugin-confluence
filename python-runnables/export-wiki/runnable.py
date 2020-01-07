@@ -5,7 +5,7 @@ from dataikuapi import DSSClient
 from dataikuapi.dss.wiki import DSSWiki, DSSWikiSettings
 from dataikuapi.utils import DataikuException
 import dataiku
-import os, re
+import os, re, logging
 from atlassian import Confluence
 
 from requests import HTTPError
@@ -14,6 +14,10 @@ from wikitransfer import WikiTransfer
 
 import locale
 os.environ["PYTHONIOENCODING"] = "utf-8"
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO,
+                    format='confluence plugin %(levelname)s - %(message)s')
 
 class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
 
@@ -41,7 +45,8 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         try:
             self.studio_external_url = self.client.get_general_settings().get_raw()['studioExternalUrl']
             assert(self.studio_external_url not in (None, ''))
-        except:
+        except Exception as err:
+            logger.error("studioExternalUrl not set :{}".format(err))
             raise Exception("Please set the DSS location URL in Administration > Settings > Notifications & Integrations > DSS Location > DSS URL")
         self.wiki = DSSWiki(self.client, self.project_key)
         self.wiki_settings = self.wiki.get_settings()
@@ -89,7 +94,8 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
     def assert_logged_in(self):
         try:
             user_details = self.confluence.get_user_details_by_userkey(self.confluence_username)
-        except:
+        except Exception as err:
+            logger.error("get_user_details_by_userkey failed:{}".format(err))
             raise Exception('Could not connect to Confluence server. Please check the connection details')
         if user_details is None:
             raise Exception('No answer from the server. Please check the connection details to the Confluence server.')

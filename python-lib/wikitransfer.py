@@ -43,7 +43,8 @@ class WikiTransfer(AttachmentTable):
 
         try:
             status = self.confluence.get_page_by_title(self.confluence_space_key, dss_page_name)
-        except :
+        except Exception as err :
+            logger.error("Error: {}".format(err))
             raise Exception("The Confluence space key \"" + self.confluence_space_key + "\" overlaps with an existing one. Please check its casing.")
 
         if status is None or "id" not in status:
@@ -101,9 +102,6 @@ class WikiTransfer(AttachmentTable):
         html = convert_code_block(html)
         html = process_refs(html)
 
-        # converting img tags present in the initial DSS pages
-        # todo: instead of uploading the image, can be tagged instead with :
-        # <ac:image ac:height="250"><ri:url ri:value="http://localhost:8082/static/dataiku/images/dss-logo-about.png" /></ac:image>
         html = add_images(
             new_id,
             self.studio_external_url,
@@ -169,8 +167,8 @@ class WikiTransfer(AttachmentTable):
         name = ""
         try :
             name = DSSWiki(self.client, project_key).get_article(article_id).get_data().get_name()
-        except:
-            logger.error('Could not get article name from DSS')
+        except Exception as err:
+            logger.error('Could not get article name from DSS {}'.format(err))
         return name
 
     def find_dss_links(self, md):
@@ -199,7 +197,6 @@ class WikiTransfer(AttachmentTable):
     def process_linked_items(self, md, article_id, new_id):
 
         md_links = self.find_all_md_links(md)
-        md_links = self.remove_duplicate_links(md_links)
 
         for target_name, project_id, upload_id in md_links:
             if target_name in self.transfered_attachments:
@@ -215,9 +212,9 @@ class WikiTransfer(AttachmentTable):
                     upload_attachment(new_id, file_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw = attachment)
                     self.transfered_attachments.append(file_name)
                 md = self.replace_md_links_with_confluence_links(md, project_id, upload_id, file_name)
-            except:
+            except Exception as err:
                 md = self.replace_md_links_with_confluence_links(md, project_id, upload_id, file_name, error_message='*Item could not be transfered*')
-                logger.error("Could not upload item \"" + project_id + '.' + upload_id + '"')
+                logger.error("Could not upload item \"" + project_id + '.' + upload_id + '":{}'.format(err))
         return md
 
     def find_all_md_links(self, md):
@@ -265,10 +262,6 @@ class WikiTransfer(AttachmentTable):
             wiki = DSSWiki(self.client, project_key)
             list_articles = wiki.list_articles()
             return list_articles[0].get_uploaded_file(upload_id)
-
-    def remove_duplicate_links(self, links):
-        # todo
-        return links
 
     def format_confluence_url(self, server_type, server_name, organization_name):
         if server_type == "local":

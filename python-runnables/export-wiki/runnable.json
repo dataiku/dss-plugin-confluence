@@ -2,7 +2,7 @@
     "meta": {
         "label": "Wiki Confluence export",
         "description": "Export project's wiki to Confluence",
-        "icon": "icon-cloud-download"
+        "icon": "icon-cloud-upload"
     },
     "impersonate": false,
     "params": [
