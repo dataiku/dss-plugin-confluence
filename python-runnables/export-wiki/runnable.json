@@ -15,7 +15,7 @@
         },
         {
             "name": "confluence_password",
-            "label": "Password",
+            "label": "Password / API key",
             "type": "PASSWORD",
             "description": "Confluence password",
             "mandatory": true

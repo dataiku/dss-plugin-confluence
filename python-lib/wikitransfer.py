@@ -274,7 +274,7 @@ class WikiTransfer(AttachmentTable):
         if server_type == "local":
             return server_name
         else:
-            assert re.match('^[a-zA-Z0-9]+$', organization_name)
+            assert re.match('^[a-zA-Z0-9-]+$', organization_name)
             return "https://" + organization_name + ".atlassian.net/wiki"
 
     def update_progress(self):

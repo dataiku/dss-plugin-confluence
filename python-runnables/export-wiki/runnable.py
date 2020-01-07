@@ -102,7 +102,7 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
             raise Exception('The space key does not match Confluence requirements ([a-z], [A-Z], [0-9], not space)')
 
     def assert_confluence_username(self):
-        username_format = re.compile(r'^[a-z0-9]+$')
+        username_format = re.compile(r'^[a-z0-9-.@]+$')
         if self.confluence_username is None or username_format.match(self.confluence_username) is None:
             raise Exception('The Confluence user name is not valid')
 
