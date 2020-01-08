@@ -1,0 +1,76 @@
+{
+    "meta": {
+        "label": "Wiki Confluence export",
+        "description": "Export project's wiki to Confluence",
+        "icon": "icon-cloud-upload"
+    },
+    "impersonate": false,
+    "params": [
+        {
+            "name": "confluence_username",
+            "label": "Username",
+            "type": "STRING",
+            "description": "Confluence username",
+            "mandatory": true
+        },
+        {
+            "name": "confluence_password",
+            "label": "Password / API key",
+            "type": "PASSWORD",
+            "description": "Confluence password",
+            "mandatory": true
+        },
+        {
+            "name": "confluence_space_name",
+            "label": "Confluence Space name",
+            "type": "STRING",
+            "description": "Only if space does not exist yet",
+            "default": "",
+            "mandatory": false
+        },
+        {
+            "name": "confluence_space_key",
+            "label": "Confluence Space key",
+            "type": "STRING",
+            "description": "(A-Z, a-z, 0-9)",
+            "mandatory": true
+        },
+        {
+            "name": "server_type",
+            "label": "Type of Confluence server",
+            "type": "SELECT",
+            "selectChoices": [
+                {
+                    "value": "local",
+                    "label": "On premises Confluence Server"
+                },
+                {
+                    "value": "remote",
+                    "label": "Confluence Cloud"
+                }
+            ]
+        },
+        {
+            "name": "orgname",
+            "label": "Organization name",
+            "type": "STRING",
+            "description": "Organization Name",
+            "visibilityCondition": "model.server_type == 'remote'",
+            "mandatory": false
+        },
+        {
+            "name": "url",
+            "label": "URL",
+            "type": "STRING",
+            "description": "URL of your Confluence server",
+            "visibilityCondition": "model.server_type == 'local'",
+            "mandatory": false
+        }
+    ],
+    "permissions": [],
+    "resultType": "URL",
+    "resultLabel": "Target wiki space on Confluence",
+    "extension": "txt",
+    "mimeType": "text/plain",
+    "macroRoles": []
+}

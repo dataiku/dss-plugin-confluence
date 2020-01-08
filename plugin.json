@@ -2,12 +2,13 @@
     "id": "confluence",
     "version": "1.0.0",
     "meta": {
-        "label": "DSS wiki push to Confluence",
-        "description": "",
-        "author": "Dataiku (Alex BOURRET)",
-        "icon": "icon-puzzle",
+        "label": "Confluence wiki",
+        "description": "Export a DSS wiki to a Confluence space",
+        "author": "Dataiku (Alex Bourret)",
+        "icon": "icon-cloud-upload",
         "licenseInfo": "Apache Software License",
-        "url": "https://www.dataiku.com/community/plugins/info/confluence.html",
-        "tags": ["Collaboration"]
+        "url": "https://www.dataiku.com/dss/plugins/info/confluence.html",
+        "tags": ["Connector", "Governance"],
+        "supportLevel": "NOT_SUPPORTED"
     }
 }

@@ -1,0 +1,5 @@
+confluence-rest-library==1.2.2
+typing==3.7.4.1
+atlassian-python-api==1.14.2
+Markdown==3.1.1
+arrow==0.15.2
