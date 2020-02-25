@@ -1,0 +1,84 @@
+{
+    "meta" : {
+        "label": "Confluence login",
+        "description": "",
+        "icon": "icon-cloud-upload"
+    },
+    "defaultDefinableInline": true,
+    "defaultDefinableAtProjectLevel": true,
+    "pluginParams": [
+    ],
+    "params": [
+        {
+            "name": "server_type",
+            "label": "Type of Confluence server",
+            "type": "SELECT",
+            "defaultValue": "local",
+            "selectChoices": [
+                {
+                    "value": "local",
+                    "label": "On premises Confluence Server"
+                },
+                {
+                    "value": "remote",
+                    "label": "Confluence Cloud"
+                }
+            ]
+        },
+        {
+            "name": "orgname",
+            "label": "Organization name",
+            "type": "STRING",
+            "description": "",
+            "visibilityCondition": "model.server_type == 'remote'",
+            "mandatory": false
+        },
+        {
+            "name": "url",
+            "label": "URL",
+            "type": "STRING",
+            "description": "URL of your Confluence server",
+            "visibilityCondition": "model.server_type == 'local'",
+            "mandatory": false
+        },
+        {
+            "name": "confluence_username",
+            "label": "Username",
+            "type": "STRING",
+            "description": "Usually your email address",
+            "visibilityCondition": "model.server_type == 'remote'",
+            "mandatory": true
+        },
+        {
+            "name": "confluence_username",
+            "label": "Username",
+            "type": "STRING",
+            "description": "",
+            "visibilityCondition": "model.server_type == 'local'",
+            "mandatory": true
+        },
+        {
+            "name": "confluence_password",
+            "label": "API token",
+            "type": "PASSWORD",
+            "description": "",
+            "visibilityCondition": "model.server_type == 'remote'",
+            "mandatory": true
+        },
+        {
+            "name": "confluence_password",
+            "label": "Password",
+            "type": "PASSWORD",
+            "description": "",
+            "visibilityCondition": "model.server_type == 'local'",
+            "mandatory": true
+        },
+        {
+            "name": "confluence_space_key",
+            "label": "Confluence Space key",
+            "type": "STRING",
+            "description": "(A-Z, a-z, 0-9)",
+            "mandatory": true
+        }
+    ]
+}

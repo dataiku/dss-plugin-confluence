@@ -15,19 +15,22 @@ from __future__ import unicode_literals
 from markdown.extensions import Extension
 from markdown.inlinepatterns import Pattern
 from markdown.util import etree
-import re
+
 
 class WikiLinkExtension(Extension):
     def __init__(self, *args, **kwargs):
         super(WikiLinkExtension, self).__init__(*args, **kwargs)
+
     def extendMarkdown(self, md, md_globals):
         WIKILINK_RE = r'\[\[([\u263a-\U0001f645\w0-9_ \-&:\'\(\)\|\.]+)\]\]'
         wikilink_pattern = WikiLinks(WIKILINK_RE)
         md.inlinePatterns.add('wikilink', wikilink_pattern, "<not_strong")
 
+
 class WikiLinks(Pattern):
     def __init__(self, pattern):
         super(WikiLinks, self).__init__(pattern)
+
     def handleMatch(self, m):
         if m.group(2).strip():
             label = m.group(2).strip()

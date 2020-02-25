@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from md2conf import convert_info_macros, convert_comment_block, convert_code_block, add_images, process_refs, upload_attachment, urlEncodeNonAscii, urlEncodeAmpAndNonAscii
-import markdown, re, urllib, logging
+import markdown
+import re
+import os
+import logging
+
+from md2conf import convert_info_macros, convert_comment_block, convert_code_block
+from md2conf import add_images, process_refs, upload_attachment, urlEncodeNonAscii
+
 from emoji import replace_emoji
 from dataikuapi.dss.wiki import DSSWiki
-
 from wikilinks import WikiLinkExtension
 from attachmenttable import AttachmentTable
-import requests
 
-import os
-import sys
-
-import locale
 os.environ["PYTHONIOENCODING"] = "utf-8"
 
 
@@ -20,21 +20,22 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
                     format='confluence plugin %(levelname)s - %(message)s')
 
+
 class WikiTransfer(AttachmentTable):
     attachment_table = AttachmentTable()
     transfered_attachments = []
     LINK_RE = r'[^\]]+'
     LINK_URL_RE = r'[\u263a-\U0001f645\w0-9_&;%:\|\' \-\.\(\)]+'
 
-    def recurse_taxonomy(self, taxonomy, ancestor = None):
+    def recurse_taxonomy(self, taxonomy, ancestor=None):
         for article in taxonomy:
             if len(article['children']) > 0:
                 confluence_id = self.transfer_article(article['id'], ancestor)
                 self.recurse_taxonomy(article['children'], confluence_id)
             else:
-                confluence_id = self.transfer_article(article['id'], ancestor)
+                self.transfer_article(article['id'], ancestor)
 
-    def transfer_article(self, article_id, parent_id = None):
+    def transfer_article(self, article_id, parent_id=None):
         self.attachment_table.reset()
         self.transfered_attachments = []
         article_data = self.wiki.get_article(article_id).get_data()
@@ -43,7 +44,7 @@ class WikiTransfer(AttachmentTable):
 
         try:
             status = self.confluence.get_page_by_title(self.confluence_space_key, dss_page_name)
-        except Exception as err :
+        except Exception as err:
             logger.error("Error: {}".format(err))
             raise Exception("The Confluence space key \"" + self.confluence_space_key + "\" overlaps with an existing one. Please check its casing.")
 
@@ -52,7 +53,7 @@ class WikiTransfer(AttachmentTable):
                 space=self.confluence_space_key,
                 title=dss_page_name,
                 body="",
-                parent_id = parent_id
+                parent_id=parent_id
             )
             self.check_status(status, "creating the Confluence page")
 
@@ -60,8 +61,8 @@ class WikiTransfer(AttachmentTable):
 
         confluence_page_body = self.convert(dss_page_body, article_id, new_id, article_data)
         status = self.confluence.update_page(
-            page_id = new_id,
-            title = dss_page_name,
+            page_id=new_id,
+            title=dss_page_name,
             body=confluence_page_body
         )
 
@@ -71,9 +72,9 @@ class WikiTransfer(AttachmentTable):
             if "message" in status:
                 error_message = error_message + 'The error message was: ' + self.html_escape(status["message"]) + ''
             status = self.confluence.update_page(
-                page_id = new_id,
-                title = dss_page_name,
-                body = error_message
+                page_id=new_id,
+                title=dss_page_name,
+                body=error_message
             )
 
         self.update_progress()
@@ -90,10 +91,10 @@ class WikiTransfer(AttachmentTable):
         md = self.convert_math_blocks(md)
         md = self.develop_dss_links(md)
         html = markdown.markdown(md, extensions=['markdown.extensions.tables',
-                                                       'markdown.extensions.fenced_code',
-                                                       'markdown.extensions.nl2br',
-                                                       'markdown.extensions.extra',
-                                                       WikiLinkExtension()])
+                                                 'markdown.extensions.fenced_code',
+                                                 'markdown.extensions.nl2br',
+                                                 'markdown.extensions.extra',
+                                                 WikiLinkExtension()])
 
         html = self.convert_alert_div_blocks(html)
         html = self.convert_dss_refs_in_wikilinks(html)
@@ -115,7 +116,7 @@ class WikiTransfer(AttachmentTable):
 
     def convert_dss_refs_in_wikilinks(self, html):
         return re.sub(
-            r'content-title="('+ self.project_key +r')\.(' + self.LINK_URL_RE + r')">',r'content-title="\2">',
+            r'content-title="(' + self.project_key + r')\.(' + self.LINK_URL_RE + r')">', r'content-title="\2">',
             html,
             flags=re.IGNORECASE
         )
@@ -125,13 +126,13 @@ class WikiTransfer(AttachmentTable):
             r'\$`([\u263a-\U0001f645\w0-9_ \-&;:\'\(\)\|\.]+)`\$',
             r'`\1`',
             md,
-            flags = re.DOTALL
+            flags=re.DOTALL
         )
         ret = re.sub(
             r'```math\n',
             r'```\n',
             ret,
-            flags = re.DOTALL
+            flags=re.DOTALL
         )
         return ret
 
@@ -143,7 +144,7 @@ class WikiTransfer(AttachmentTable):
             r'<div class="alert".*?>\n?(.*?)\n?</div>',
             confluence_alert_opening_tag + r'\1' + confluence_alert_closing_tag,
             html,
-            flags = re.DOTALL
+            flags=re.DOTALL
         )
 
     def develop_dss_links(self, md):
@@ -160,19 +161,20 @@ class WikiTransfer(AttachmentTable):
             object_path = self.build_dss_path(object_type, project_key, object_id)
 
             md = re.sub(r'\(' + object_type + r':' + initial_id + r'\)', '(' + object_path + ')',  md, flags=re.IGNORECASE)
-            md = re.sub( object_type + r':' + initial_id, self.build_dss_url(object_type, object_path),  md, flags=re.IGNORECASE)
+            md = re.sub(object_type + r':' + initial_id, self.build_dss_url(object_type, object_path),  md, flags=re.IGNORECASE)
         return md
 
     def article_title(self, project_key, article_id):
         name = ""
-        try :
+        try:
             name = DSSWiki(self.client, project_key).get_article(article_id).get_data().get_name()
         except Exception as err:
             logger.error('Could not get article name from DSS {}'.format(err))
         return name
 
     def find_dss_links(self, md):
-        dss_links_regexp = re.compile(r'(\barticle\b|\bsaved_model\b|\binsight\b|\bproject\b|\bdataset\b):([a-zA-Z0-9_]+)\.?([a-zA-Z0-9_]+)?',flags=re.I | re.X)
+        dss_links_regexp = re.compile(r'(\barticle\b|\bsaved_model\b|\binsight\b|\bproject\b|\bdataset\b):([a-zA-Z0-9_]+)\.?([a-zA-Z0-9_]+)?',
+                                      flags=re.I | re.X)
         return dss_links_regexp.findall(md)
 
     def build_dss_path(self, object_type, project_key, object_id):
@@ -209,7 +211,7 @@ class WikiTransfer(AttachmentTable):
             try:
                 attachment = self.get_uploaded_file(article, project_id, upload_id)
                 if file_name not in self.transfered_attachments:
-                    upload_attachment(new_id, file_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw = attachment)
+                    upload_attachment(new_id, file_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw=attachment)
                     self.transfered_attachments.append(file_name)
                 md = self.replace_md_links_with_confluence_links(md, project_id, upload_id, file_name)
             except Exception as err:
@@ -224,16 +226,16 @@ class WikiTransfer(AttachmentTable):
             flags=re.UNICODE
         )
 
-    def replace_md_links_with_confluence_links(self, md, project_key, upload_id, file_name, error_message = None):
+    def replace_md_links_with_confluence_links(self, md, project_key, upload_id, file_name, error_message=None):
         ret_md = self.replace_img_links_with_confluence_links(md, project_key, upload_id, file_name, error_message)
         ret_md = self.replace_objects_links_with_confluence_links(ret_md, project_key, upload_id, file_name, error_message)
         return ret_md
 
-    def replace_img_links_with_confluence_links(self, md, project_key, upload_id, file_name, error_message = None):
+    def replace_img_links_with_confluence_links(self, md, project_key, upload_id, file_name, error_message=None):
         if error_message is not None:
             ret_link = error_message
         else:
-            ret_link = '<ac:image><ri:attachment ri:filename="'+ self.html_escape(urlEncodeNonAscii(file_name)) +'" /></ac:image>'
+            ret_link = '<ac:image><ri:attachment ri:filename="' + self.html_escape(urlEncodeNonAscii(file_name)) + '" /></ac:image>'
         ret_md = re.sub(
             r'!\[' + self.LINK_RE + r'\]\(' + project_key + r'\.' + upload_id + r'\)',
             ret_link,
@@ -242,11 +244,11 @@ class WikiTransfer(AttachmentTable):
         )
         return ret_md
 
-    def replace_objects_links_with_confluence_links(self, md, project_key, upload_id, file_name, error_message = None):
+    def replace_objects_links_with_confluence_links(self, md, project_key, upload_id, file_name, error_message=None):
         if error_message is not None:
             ret_link = error_message
         else:
-            ret_link = '<ac:link><ri:attachment ri:filename="'+ self.html_escape(urlEncodeNonAscii(file_name)) +'" /></ac:link>'
+            ret_link = '<ac:link><ri:attachment ri:filename="' + self.html_escape(urlEncodeNonAscii(file_name)) + '" /></ac:link>'
         ret_md = re.sub(
             r'\[' + self.LINK_RE + r'\]\(' + project_key + r'\.' + upload_id + r'\)',
             ret_link,
@@ -281,11 +283,11 @@ class WikiTransfer(AttachmentTable):
                 article = self.wiki.get_article(article.article_id)
                 try:
                     file = article.get_uploaded_file(attachment['smartId'])
-                    upload_attachment(article_id, attachment_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw = file)
+                    upload_attachment(article_id, attachment_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw=file)
                     self.transfered_attachments.append(attachment_name)
                 except Exception as err:
                     # get_uploaded_file not implemented yet on backend, older version of DSS
-                    pass
+                    logger.info("Attachement could not be uploaded because of older DSS backend:{}".format(err))
             elif attachment[u'attachmentType'] == 'DSS_OBJECT':
                 self.attachment_table.add(attachment)
 
@@ -301,7 +303,7 @@ class WikiTransfer(AttachmentTable):
         else:
             return
         if error_code / 100 != 2:
-            raise Exception('Error '+ str(error_code) + ' while ' + context + ' : ' + status["message"] + ". " + self.get_advice(error_code))
+            raise Exception('Error ' + str(error_code) + ' while ' + context + ' : ' + status["message"] + ". " + self.get_advice(error_code))
 
     def get_advice(self, error_code):
         advice = {
@@ -327,13 +329,13 @@ class WikiTransfer(AttachmentTable):
             ">": "&gt;",
             "<": "&lt;",
         }
-        return "".join(html_escape_table.get(c,c) for c in text)
+        return "".join(html_escape_table.get(c, c) for c in text)
 
     def update_landing_page(self, page_id):
         self.confluence.update_page(
-            page_id = page_id,
-            title = self.confluence_space_name + ' Home',
-            body = self.create_landing_page()
+            page_id=page_id,
+            title=self.confluence_space_name + ' Home',
+            body=self.create_landing_page()
         )
 
     def create_landing_page(self):

@@ -5,19 +5,18 @@ from dataikuapi import DSSClient
 from dataikuapi.dss.wiki import DSSWiki, DSSWikiSettings
 from dataikuapi.utils import DataikuException
 import dataiku
-import os, re, logging
+import os
+import re
+import logging
 from atlassian import Confluence
-
-from requests import HTTPError
-
 from wikitransfer import WikiTransfer
 
-import locale
 os.environ["PYTHONIOENCODING"] = "utf-8"
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
                     format='confluence plugin %(levelname)s - %(message)s')
+
 
 class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
 
@@ -28,16 +27,40 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         :param plugin_config: contains the plugin settings
         """
         self.project_key = project_key
+        print("ALX:config={}, plugin_config={}".format(config, plugin_config))
+        """
+        {
+            'confluence_username': 'alex.bourret@gmail.com',
+            'confluence_password': 'ZQaHxwnwBP5hCbGXL1U09654',
+            'confluence_space_name': 'TEST5',
+            'server_type': 'remote',
+            'orgname': 'dss-testing',
+            'confluence_space_key': 'TEST5',
+            'confluence_login': {
+                'server_type': 'remote',
+                'orgname': 'dss-testing',
+                'confluence_username': 'alex.bourret@gmail.com',
+                'confluence_password': 'ZQaHxwnwBP5hCbGXL1U09654',
+                'confluence_space_key': 'TEST6'
+            }
+        }, plugin_config = {
+            'confluence_login': {}
+        }
+        """
         self.config = config
-        self.plugin_config = plugin_config
-        self.confluence_username = self.config.get("confluence_username", None)
+        confluence_login = self.config.get("confluence_login", None)
+        self.confluence_username = confluence_login.get("confluence_username", None)
         self.assert_confluence_username()
-        self.confluence_password = self.config.get("confluence_password", None)
+        self.confluence_password = confluence_login.get("confluence_password", None)
         self.assert_confluence_password()
-        self.confluence_url = self.format_confluence_url(self.config.get("server_type", None), self.config.get("url", None), self.config.get("orgname", None))
-        self.confluence_space_key = self.config.get("confluence_space_key", None)
+        self.confluence_url = self.format_confluence_url(
+            confluence_login.get("server_type", None),
+            confluence_login.get("url", None),
+            confluence_login.get("orgname", None)
+        )
+        self.confluence_space_key = confluence_login.get("confluence_space_key", None)
         self.assert_space_key()
-        self.confluence_space_name = self.config.get("confluence_space_name", None)
+        self.confluence_space_name = confluence_login.get("confluence_space_name", self.confluence_space_key)
         if self.confluence_space_name == "":
             self.confluence_space_name = self.confluence_space_key
         self.check_space_key_format()
@@ -72,12 +95,16 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
             raise Exception('Empty answer from server. Please check the Confluence server address.')
 
         if "id" not in space:
-            space = self.confluence.create_space(self.confluence_space_key, self.confluence_space_name)
+            space = self.confluence.create_space(
+                self.confluence_space_key,
+                self.confluence_space_name
+            )
 
         if space is None:
             space = self.confluence.get_space(self.confluence_space_key)
             if u'statusCode' in space and space[u'statusCode'] == 404:
-                raise Exception('Could not create the "' + self.confluence_space_key + '" space. It probably exists but you don\'t have permission to view it, or the casing is wrong.')
+                raise Exception('Could not create the "' + self.confluence_space_key
+                                + '" space. It probably exists but you don\'t have permission to view it, or the casing is wrong.')
 
         if space is not None and "homepage" in space:
             self.space_homepage_id = space['homepage']['id']

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import re, arrow
+import re
+import arrow
+
 
 class AttachmentTable():
     def __init__(self):
