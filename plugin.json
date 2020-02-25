@@ -7,7 +7,7 @@
         "author": "Dataiku (Alex Bourret)",
         "icon": "icon-cloud-upload",
         "licenseInfo": "Apache Software License",
-        "url": "https://www.dataiku.com/dss/plugins/info/confluence.html",
+        "url": "https://www.dataiku.com/product/plugins/confluence/",
         "tags": ["Connector", "Governance"],
         "supportLevel": "NOT_SUPPORTED"
     }

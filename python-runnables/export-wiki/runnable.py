@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from dataiku.runnables import Runnable
-from dataikuapi import DSSClient
-from dataikuapi.dss.wiki import DSSWiki, DSSWikiSettings
-from dataikuapi.utils import DataikuException
+from dataikuapi.dss.wiki import DSSWiki
 import dataiku
 import os
 import re
@@ -27,28 +25,10 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         :param plugin_config: contains the plugin settings
         """
         self.project_key = project_key
-        print("ALX:config={}, plugin_config={}".format(config, plugin_config))
-        """
-        {
-            'confluence_username': 'alex.bourret@gmail.com',
-            'confluence_password': 'ZQaHxwnwBP5hCbGXL1U09654',
-            'confluence_space_name': 'TEST5',
-            'server_type': 'remote',
-            'orgname': 'dss-testing',
-            'confluence_space_key': 'TEST5',
-            'confluence_login': {
-                'server_type': 'remote',
-                'orgname': 'dss-testing',
-                'confluence_username': 'alex.bourret@gmail.com',
-                'confluence_password': 'ZQaHxwnwBP5hCbGXL1U09654',
-                'confluence_space_key': 'TEST6'
-            }
-        }, plugin_config = {
-            'confluence_login': {}
-        }
-        """
         self.config = config
         confluence_login = self.config.get("confluence_login", None)
+        if confluence_login is None:
+            raise Exception("No Confluence login is currently set.")
         self.confluence_username = confluence_login.get("confluence_username", None)
         self.assert_confluence_username()
         self.confluence_password = confluence_login.get("confluence_password", None)
@@ -115,7 +95,7 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
 
         if self.space_homepage_id is not None:
             self.update_landing_page(self.space_homepage_id)
-        
+
         return self.confluence_url + "/display/" + self.confluence_space_key
 
     def assert_logged_in(self):
