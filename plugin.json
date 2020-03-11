@@ -8,7 +8,7 @@
         "icon": "icon-cloud-upload",
         "licenseInfo": "Apache Software License",
         "url": "https://www.dataiku.com/product/plugins/confluence/",
-        "tags": ["Connector", "Governance"],
+        "tags": ["Format", "Cloud"],
         "supportLevel": "NOT_SUPPORTED"
     }
 }
