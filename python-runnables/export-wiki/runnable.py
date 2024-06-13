@@ -68,7 +68,7 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
             username=self.confluence_username,
             password=self.confluence_password
         )
-        #self.assert_logged_in()
+        self.assert_logged_in()
         self.progress = 0
 
     def get_progress_target(self):
