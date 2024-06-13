@@ -14,7 +14,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from markdown.extensions import Extension
 from markdown.inlinepatterns import Pattern
-from markdown.util import etree
+import xml.etree.ElementTree as etree # change due to https://python-markdown.github.io/changelog/#markdownutiletree-deprecated
 
 
 class WikiLinkExtension(Extension):
