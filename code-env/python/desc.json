@@ -7,6 +7,5 @@
     ],
     "forceConda": false,
     "installCorePackages": true,
-    "corePackagesSet": "PANDAS11",
     "installJupyterSupport": false
 }
