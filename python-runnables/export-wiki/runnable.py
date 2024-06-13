@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from dataiku.runnables import Runnable
+from dataiku.runnables import utils
 from dataikuapi.dss.wiki import DSSWiki
 import dataiku
 import os
@@ -44,13 +45,19 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         if self.confluence_space_name == "":
             self.confluence_space_name = self.confluence_space_key
         self.check_space_key_format()
+        
+        # Retrieving general settings for studioExternalUrl requires global admin permissions, so must retrieve an admin_client
         self.client = dataiku.api_client()
+        user_auth_info = self.client.get_auth_info()
+        admin_client = utils.get_admin_dss_client("confluence_plugin_admin_apikey", user_auth_info)     
+        
         try:
-            self.studio_external_url = self.client.get_general_settings().get_raw()['studioExternalUrl']
+            self.studio_external_url = admin_client.get_general_settings().get_raw()['studioExternalUrl']
             assert(self.studio_external_url not in (None, ''))
         except Exception as err:
             logger.error("studioExternalUrl not set :{}".format(err))
             raise Exception("Please set the DSS location URL in Administration > Settings > Notifications & Integrations > DSS Location > DSS URL")
+        
         self.wiki = DSSWiki(self.client, self.project_key)
         self.wiki_settings = self.wiki.get_settings()
         self.taxonomy = self.wiki_settings.get_taxonomy()
