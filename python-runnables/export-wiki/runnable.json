@@ -13,7 +13,7 @@
             "parameterSetId": "confluence-login"
         }
     ],
-    "permissions": [],
+    "permissions": ["ADMIN"],
     "resultType": "URL",
     "resultLabel": "Target wiki space on Confluence",
     "extension": "txt",
