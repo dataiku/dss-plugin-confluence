@@ -68,7 +68,6 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
             username=self.confluence_username,
             password=self.confluence_password
         )
-        self.assert_logged_in()
         self.progress = 0
 
     def get_progress_target(self):
@@ -104,24 +103,6 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
             self.update_landing_page(self.space_homepage_id)
 
         return self.confluence_url + "/display/" + self.confluence_space_key
-
-    def assert_logged_in(self):
-        try:
-            user_details = self.confluence.get_user_details_by_userkey(self.confluence_username)
-        except Exception as err:
-            logger.error("get_user_details_by_userkey failed:{}".format(err))
-            raise Exception('Could not connect to Confluence server. Please check the connection details')
-        if user_details is None:
-            raise Exception('No answer from the server. Please check the connection details to the Confluence server.')
-        if "HTTP Status 401 – Unauthorized" in user_details:
-            raise Exception('No valid Confluence credentials, please check login and password')
-        if "errorMessage" in user_details:
-            raise Exception('Error while accessing Confluence site : {}'.format(user_details["errorMessage"]))
-        if "status-code" in user_details and user_details["status-code"] > 400:
-            if "message" in user_details:
-                raise Exception('Error while accessing Confluence site : {}'.format(user_details["message"]))
-            else:
-                raise Exception('Error {} while accessing Confluence site'.format(user_details["status-code"]))
 
     def assert_space_key(self):
         space_name_format = re.compile(r'^[a-zA-Z0-9]+$')
