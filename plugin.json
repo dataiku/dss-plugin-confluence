@@ -8,8 +8,7 @@
         "icon": "icon-cloud-upload",
         "licenseInfo": "Apache Software License",
         "url": "https://www.dataiku.com/product/plugins/confluence/",
-        "category": "Connect",
-        "tags": ["Export"],
+        "tags": ["Business Applications", "Productivity", "Export", "Governance"],
         "supportLevel": "NOT_SUPPORTED"
     }
 }
