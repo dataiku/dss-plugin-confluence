@@ -1,6 +1,6 @@
 {
     "id": "confluence",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "meta": {
         "label": "Confluence wiki",
         "description": "Export a DSS wiki to a Confluence space",
