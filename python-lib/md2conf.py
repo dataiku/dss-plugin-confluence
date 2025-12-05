@@ -318,8 +318,19 @@ def upload_attachment(page_id, file, comment, confluence_api_url, username, pass
     session.headers.update({'X-Atlassian-Token': 'no-check'})
 
     res = session.post(url, files=file_to_upload)
-
-    return True
+    link = None
+    try:
+        json_response = res.json()
+        url_base = json_response.get("_links", {}).get("base", "")
+        if "results" in json_response:
+            json_response = json_response.get("results")[0]
+        link = "{}{}".format(
+            url_base,
+            json_response.get("_links", {}).get("download", ""),
+        )
+    except Exception as error:
+        print("Error {}".format(error))
+    return link
 
 def urlEncodeNonAscii(b):
     return re.sub('[\x80-\xFF]', lambda c: '%%%02x' % ord(c.group(0)), b)

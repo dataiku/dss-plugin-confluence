@@ -31,13 +31,14 @@ class WikiTransfer(AttachmentTable):
         for article in taxonomy:
             if len(article['children']) > 0:
                 confluence_id = self.transfer_article(article['id'], ancestor)
-                self.recurse_taxonomy(article['children'], confluence_id)
+                self.recurse_taxonomy(article['children'], ancestor=confluence_id)
             else:
-                self.transfer_article(article['id'], ancestor)
+                self.transfer_article(article['id'], parent_id=ancestor)
 
     def transfer_article(self, article_id, parent_id=None):
         self.attachment_table.reset()
         self.transfered_attachments = []
+        self.transfered_links = []
         article_data = self.wiki.get_article(article_id).get_data()
         dss_page_name = article_data.get_name()
         dss_page_body = article_data.get_body()
@@ -90,6 +91,9 @@ class WikiTransfer(AttachmentTable):
         md = md + u'\n' + self.attachment_table.to_md()
         md = self.convert_math_blocks(md)
         md = self.develop_dss_links(md)
+        md = self.develop_image_md_links(md)
+        md = self.develop_dss_md_links(md)
+        md = self.develop_md_links(md)
         html = markdown.markdown(md, extensions=['markdown.extensions.tables',
                                                  'markdown.extensions.fenced_code',
                                                  'markdown.extensions.nl2br',
@@ -164,6 +168,67 @@ class WikiTransfer(AttachmentTable):
             md = re.sub(object_type + r':' + initial_id, self.build_dss_url(object_type, object_path),  md, flags=re.IGNORECASE)
         return md
 
+    def develop_md_links(self, md):
+        # Processing all [name](link) links
+        links = self.find_md_links(md)
+        for link in links:
+            link_name = link[0]
+            link_target = link[1]
+            if link_name in self.transfered_attachments:
+                target_link = self.transfered_links[self.transfered_attachments.index(link_name)]
+                replacement = '<a href="{}">{}</a>'.format(target_link, link_name)
+                md = md.replace(
+                    "[{}]({})".format(link_name, link_target),
+                    replacement
+                )
+        return md
+
+    def develop_image_md_links(self, md):
+        # Processing all ![name](link) links
+        links = self.find_image_md_links(md)
+        for link in links:
+            link_name = link[0]
+            link_target = link[1]
+            if link_name in self.transfered_attachments:
+                target_link = self.transfered_links[self.transfered_attachments.index(link_name)]
+                replacement = '<img src="{}" alt="{}" />'.format(target_link, link_name)
+                md = md.replace(
+                    "![{}]({})".format(link_name, link_target),
+                    replacement
+                )
+        return md
+
+    def develop_dss_md_links(self, md):
+        # Processing all [name]{name}(link) links
+        links = self.find_dss_md_links(md)
+        for link in links:
+            link_name = link[0]
+            link_target = link[1]
+            link_target_2 = link[2]
+            if link_name in self.transfered_attachments:
+                target_link = self.transfered_links[self.transfered_attachments.index(link_name)]
+                replacement = '<a href="{}">{}</a>'.format(target_link, link_name)
+                md = md.replace(
+                    "[{}]{{{}}}({})".format(link_name, link_target, link_target_2),
+                    replacement
+                )
+        return md
+
+    def find_dss_md_links(self, md):
+        pattern = r'\[([^\]]+)\]\{([^)]+)\}\(([^)]+)\)'
+        matches = re.findall(pattern, md)
+        return matches
+
+    def find_md_links(self, md):
+        pattern = r'\[([^\]]+)\]\(([^)]+)\)'
+        matches = re.findall(pattern, md)
+        return matches
+
+    def find_image_md_links(self, md):
+        pattern = r'\!\[([^\]]+)\]\(([^)]+)\)'
+        matches = re.findall(pattern, md)
+        return matches
+
     def article_title(self, project_key, article_id):
         name = ""
         try:
@@ -219,8 +284,9 @@ class WikiTransfer(AttachmentTable):
             try:
                 attachment = self.get_uploaded_file(article, project_id, upload_id)
                 if file_name not in self.transfered_attachments:
-                    upload_attachment(new_id, file_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw=attachment)
+                    url = upload_attachment(new_id, file_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw=attachment)
                     self.transfered_attachments.append(file_name)
+                    self.transfered_links.append(url)
                 md = self.replace_md_links_with_confluence_links(md, project_id, upload_id, file_name)
             except Exception as err:
                 md = self.replace_md_links_with_confluence_links(md, project_id, upload_id, file_name, error_message='*Item could not be transfered*')
@@ -288,11 +354,14 @@ class WikiTransfer(AttachmentTable):
         for attachment in article.article_data['article']['attachments']:
             if attachment[u'attachmentType'] == 'FILE' and attachment[u'attachmentType'] not in self.transfered_attachments:
                 attachment_name = attachment['details']['objectDisplayName']
+                logger.info("Uploading attachement {} / id: {}".format(attachment_name, attachment['smartId']))
                 article = self.wiki.get_article(article.article_id)
                 try:
                     file = article.get_uploaded_file(attachment['smartId'])
-                    upload_attachment(article_id, attachment_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw=file)
+                    url = upload_attachment(article_id, attachment_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw=file)
                     self.transfered_attachments.append(attachment_name)
+                    self.transfered_links.append(url)
+                    logger.info("Adding {}, {}, {}".format(file, attachment_name, url))
                 except Exception as err:
                     # get_uploaded_file not implemented yet on backend, older version of DSS
                     logger.info("Attachement could not be uploaded because of older DSS backend:{}".format(err))

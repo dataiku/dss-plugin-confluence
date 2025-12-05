@@ -27,9 +27,9 @@
         },
         {
             "name": "orgname",
-            "label": "Organization name",
+            "label": "Subdomain",
             "type": "STRING",
-            "description": "",
+            "description": "First part of your URL: https://<subdomain>.atlassian.net",
             "visibilityCondition": "model.server_type == 'remote'",
             "mandatory": false
         },
