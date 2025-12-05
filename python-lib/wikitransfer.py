@@ -238,7 +238,7 @@ class WikiTransfer(AttachmentTable):
         return name
 
     def find_dss_links(self, md):
-        dss_links_regexp = re.compile(r'(\barticle\b|\bsaved_model\b|\binsight\b|\bproject\b|\bdataset\b|\bflow_zone\b|\bscenario\b|\bdashboard\b|\brecipe\b|\bmanaged_folder\b|\bstatistics_worksheet\b|\blambda_service\b):([a-zA-Z0-9_]+)\.?([a-zA-Z0-9_]+)?',
+        dss_links_regexp = re.compile(r'(\barticle\b|\bsaved_model\b|\binsight\b|\bproject\b|\bdataset\b|\bflow_zone\b|\bscenario\b|\bdashboard\b|\brecipe\b|\bmanaged_folder\b|\bstatistics_worksheet\b|\blambda_service\b|\banalysis\b):([a-zA-Z0-9_]+)\.?([a-zA-Z0-9_]+)?',
                                       flags=re.I | re.X)
         return dss_links_regexp.findall(md)
 
@@ -256,6 +256,7 @@ class WikiTransfer(AttachmentTable):
             'managed_folder': '/managedfolder/' + object_id + '/view/',
             'statistics_worksheet': '/statistics/worksheet/' + object_id,
             'lambda_service': '/api-designer/' + object_id + '/endpoints/',
+            'analysis': '/analysis/' + object_id + '/script/',
         }
         if object_type == 'article':
             return project_key + '.' + object_id
