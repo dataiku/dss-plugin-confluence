@@ -97,7 +97,7 @@ class DSSWikiConfluenceExporter(Runnable, WikiTransfer):
         else:
             self.space_homepage_id = None
 
-        self.recurse_taxonomy(self.taxonomy, self.space_homepage_id)
+        self.recurse_taxonomy(self.taxonomy, ancestor=self.space_homepage_id)
 
         if self.space_homepage_id is not None:
             self.update_landing_page(self.space_homepage_id)

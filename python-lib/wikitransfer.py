@@ -31,9 +31,9 @@ class WikiTransfer(AttachmentTable):
         for article in taxonomy:
             if len(article['children']) > 0:
                 confluence_id = self.transfer_article(article['id'], ancestor)
-                self.recurse_taxonomy(article['children'], confluence_id)
+                self.recurse_taxonomy(article['children'], ancestor=confluence_id)
             else:
-                self.transfer_article(article['id'], ancestor)
+                self.transfer_article(article['id'], parent_id=ancestor)
 
     def transfer_article(self, article_id, parent_id=None):
         self.attachment_table.reset()
@@ -353,12 +353,14 @@ class WikiTransfer(AttachmentTable):
         for attachment in article.article_data['article']['attachments']:
             if attachment[u'attachmentType'] == 'FILE' and attachment[u'attachmentType'] not in self.transfered_attachments:
                 attachment_name = attachment['details']['objectDisplayName']
+                logger.info("Uploading attachement {} / id: {}".format(attachment_name, attachment['smartId']))
                 article = self.wiki.get_article(article.article_id)
                 try:
                     file = article.get_uploaded_file(attachment['smartId'])
                     url = upload_attachment(article_id, attachment_name, "", self.confluence_url, self.confluence_username, self.confluence_password, raw=file)
                     self.transfered_attachments.append(attachment_name)
                     self.transfered_links.append(url)
+                    logger.info("Adding {}, {}, {}".format(file, attachment_name, url))
                 except Exception as err:
                     # get_uploaded_file not implemented yet on backend, older version of DSS
                     logger.info("Attachement could not be uploaded because of older DSS backend:{}".format(err))
