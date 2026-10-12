@@ -1,14 +1,19 @@
 {
-    "id": "confluence",
-    "version": "1.1.2",
-    "meta": {
-        "label": "Confluence wiki",
-        "description": "Export a DSS wiki to a Confluence space",
-        "author": "Dataiku (Alex Bourret)",
-        "icon": "icon-cloud-upload",
-        "licenseInfo": "Apache Software License",
-        "url": "https://www.dataiku.com/product/plugins/confluence/",
-        "tags": ["Business Applications", "Productivity", "Export", "Governance"],
-        "supportLevel": "NOT_SUPPORTED"
-    }
+  "id": "confluence",
+  "version": "1.2.0",
+  "meta": {
+    "label": "Confluence wiki",
+    "description": "Export a DSS wiki to a Confluence space",
+    "author": "Dataiku (Alex Bourret)",
+    "icon": "icon-cloud-upload",
+    "licenseInfo": "Apache Software License",
+    "url": "https://www.dataiku.com/product/plugins/confluence/",
+    "tags": [
+      "Business Applications",
+      "Productivity",
+      "Export",
+      "Governance"
+    ],
+    "supportLevel": "NOT_SUPPORTED"
+  }
 }
